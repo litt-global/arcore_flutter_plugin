@@ -12,7 +12,7 @@ class FlutterArCoreNode(map: HashMap<String, *>) {
 
     val dartType: String = map["dartType"] as String
     val name: String = map["name"] as String
-    val image: FlutterArCoreImage? = createArCoreImage(map["image"] as? HashMap<String, *>)
+    val mediaInfo: FlutterArCoreMediaInfo? = createArCoreImage(map["mediaInfo"] as? HashMap<String, *>)
     val objectUrl: String? = map["objectUrl"] as? String
     val object3DFileName: String? = map["object3DFileName"] as? String
     val shape: FlutterArCoreShape? = getShape(map["shape"] as? HashMap<String, *>)
@@ -65,9 +65,9 @@ class FlutterArCoreNode(map: HashMap<String, *>) {
         return null
     }
 
-    private fun createArCoreImage(map: HashMap<String, *>?): FlutterArCoreImage? {
+    private fun createArCoreImage(map: HashMap<String, *>?): FlutterArCoreMediaInfo? {
         if (map != null)
-            return FlutterArCoreImage(map);
+            return FlutterArCoreMediaInfo(map);
 
         return null;
     }

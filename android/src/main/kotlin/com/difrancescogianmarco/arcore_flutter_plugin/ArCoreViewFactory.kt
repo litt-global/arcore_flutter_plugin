@@ -17,7 +17,7 @@ class ArCoreViewFactory(val activity: Activity, val messenger: BinaryMessenger) 
         Log.i("ArCoreViewFactory", args.toString())
         val type = params["type"] as String
         if (type == "faces") {
-            return ArCoreFaceView(activity, context, messenger, id)
+//            return ArCoreFaceView(activity, context, messenger, id)
         } else if (type == "augmented") {
             val useSingleImage = params["useSingleImage"] as? Boolean ?: true
             return ArCoreAugmentedImagesView(activity, context, messenger, id, useSingleImage)

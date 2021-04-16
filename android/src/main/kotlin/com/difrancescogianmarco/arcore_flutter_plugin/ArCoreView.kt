@@ -4,8 +4,9 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -16,19 +17,23 @@ import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCo
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCorePose
 import com.difrancescogianmarco.arcore_flutter_plugin.models.RotatingNode
 import com.difrancescogianmarco.arcore_flutter_plugin.utils.ArCoreUtils
+import com.google.android.filament.filamat.MaterialBuilder
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.UnavailableException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import com.google.ar.sceneform.*
-import com.google.ar.sceneform.rendering.ModelRenderable
-import com.google.ar.sceneform.rendering.Texture
-import com.google.ar.sceneform.ux.AugmentedFaceNode
+import com.google.ar.sceneform.rendering.*
+//import com.google.ar.sceneform.ux.AugmentedFaceNode
 import io.flutter.app.FlutterApplication
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
+import android.R.attr.start
+
+
+
 
 class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMessenger, id: Int, private val isAugmentedFaces: Boolean) : PlatformView, MethodChannel.MethodCallHandler {
     private val methodChannel: MethodChannel = MethodChannel(messenger, "arcore_flutter_plugin_$id")
@@ -46,7 +51,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
     //AUGMENTEDFACE
     private var faceRegionsRenderable: ModelRenderable? = null
     private var faceMeshTexture: Texture? = null
-    private val faceNodeMap = HashMap<AugmentedFace, AugmentedFaceNode>()
+//    private val faceNodeMap = HashMap<AugmentedFace, AugmentedFaceNode>()
 
     init {
         methodChannel.setMethodCallHandler(this)
@@ -100,26 +105,26 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 faceList?.let {
                     // Make new AugmentedFaceNodes for any new faces.
                     for (face in faceList) {
-                        if (!faceNodeMap.containsKey(face)) {
-                            val faceNode = AugmentedFaceNode(face)
-                            faceNode.setParent(arSceneView?.scene)
-                            faceNode.faceRegionsRenderable = faceRegionsRenderable
-                            faceNode.faceMeshTexture = faceMeshTexture
-                            faceNodeMap[face] = faceNode
-                        }
+//                        if (!faceNodeMap.containsKey(face)) {
+//                            val faceNode = AugmentedFaceNode(face)
+//                            faceNode.setParent(arSceneView?.scene)
+//                            faceNode.faceRegionsRenderable = faceRegionsRenderable
+//                            faceNode.faceMeshTexture = faceMeshTexture
+//                            faceNodeMap[face] = faceNode
+//                        }
                     }
 
                     // Remove any AugmentedFaceNodes associated with an AugmentedFace that stopped tracking.
-                    val iter = faceNodeMap.iterator()
-                    while (iter.hasNext()) {
-                        val entry = iter.next()
-                        val face = entry.key
-                        if (face.trackingState == TrackingState.STOPPED) {
-                            val faceNode = entry.value
-                            faceNode.setParent(null)
-                            iter.remove()
-                        }
-                    }
+//                    val iter = faceNodeMap.iterator()
+//                    while (iter.hasNext()) {
+//                        val entry = iter.next()
+//                        val face = entry.key
+//                        if (face.trackingState == TrackingState.STOPPED) {
+//                            val faceNode = entry.value
+//                            faceNode.setParent(null)
+//                            iter.remove()
+//                        }
+//                    }
                 }
             }
         }
@@ -330,8 +335,8 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         if (arSceneView == null) {
             return
         }
-
-        RenderableCustomFactory.makeRenderable(activity.applicationContext, flutterArCoreNode) { renderable, t ->
+        Log.d("stvn", "HahHhahaha texture -2")
+        RenderableCustomFactory.makeRenderable(activity.applicationContext, flutterArCoreNode) { renderable, texture, material, t ->
             if (t != null) {
                 result.error("Make Renderable Error", t.localizedMessage, null)
                 return@makeRenderable
@@ -342,11 +347,103 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 anchorNode.name = flutterArCoreNode.name
                 anchorNode.renderable = renderable
 
+                if (texture != null) {
+                    Log.d("stvn", "HahHhahaha texture 1")
+                    anchorNode.renderableInstance!!.material.setInt("baseColorIndex", 0)
+                    anchorNode.renderableInstance!!.material.setTexture("baseColorMap", texture)
+
+
+                    // Material repeating itself
+                    /*
+                    val filamentEngine = EngineInstance.getEngine().getFilamentEngine();
+
+                    MaterialBuilder.init();
+                    val materialBuilder = MaterialBuilder()
+                            // By default, materials are generated only for DESKTOP. Since we're an Android
+                            // app, we set the platform to MOBILE.
+                            .platform(MaterialBuilder.Platform.MOBILE)
+                            .name("Plain Video Material")
+                            .require(MaterialBuilder.VertexAttribute.UV0)
+                            // Defaults to UNLIT because it's the only emissive one
+                            .shading(MaterialBuilder.Shading.UNLIT)
+                            .doubleSided(true)
+                            .samplerParameter(MaterialBuilder.SamplerType.SAMPLER_EXTERNAL, MaterialBuilder.SamplerFormat.FLOAT, MaterialBuilder.SamplerPrecision.DEFAULT, "videoTexture")
+                            .optimization(MaterialBuilder.Optimization.NONE)
+
+                    val plainVideoMaterialPackage = materialBuilder
+                            .blending(MaterialBuilder.BlendingMode.OPAQUE)
+
+                            .material("void material(inout MaterialInputs material) {\n" +
+                                    "        prepareMaterial(material);\n" +
+                                    "\n" +
+                                    "        vec2 uv = getUV0();\n" +
+//                                    "        uv.x = uv.x * 1;\n" +
+//                                    "        uv.y = uv.y * 1;\n" +
+                                    "\n" +
+                                    "        material.baseColor = texture(materialParams_videoTexture, uv).rgba;\n" +
+                                    "    }")
+                            .build(filamentEngine)
+
+                    if (plainVideoMaterialPackage.isValid()) {
+                        Log.d("stvn", "HahHhahaha texture 2")
+                        val buffer = plainVideoMaterialPackage.getBuffer();
+                        Material.builder()
+                                .setSource(buffer)
+                                .build()
+                                .thenAccept {material ->
+                                    Log.d("stvn", "HahHhahaha texture 3")
+                                    anchorNode.renderableInstance!!.setMaterial(material)
+                                    anchorNode.renderableInstance!!.animate(true).start()
+
+                                    Log.i(TAG, "addNodeWithAnchor inserted ${anchorNode.name}")
+                                    attachNodeToParent(anchorNode, flutterArCoreNode.parentNodeName)
+
+                                    for (node in flutterArCoreNode.children) {
+                                        node.parentNodeName = flutterArCoreNode.name
+
+                                        onAddNode(node, null)
+                                    }
+                                }
+                                .exceptionally { throwable ->
+                                    Log.i(TAG, "renderable error ${throwable.localizedMessage}")
+                                    null
+                                }
+                    }
+                    */
+                    Log.d("stvn", "HahHhahaha texture 4")
+                }
+
+
+                if (material != null) {
+                    val externalTexture = ExternalTexture()
+
+                    anchorNode.renderableInstance!!.setMaterial(material)
+
+                    if (flutterArCoreNode.mediaInfo != null && flutterArCoreNode.mediaInfo.chromaColor != null) {
+                        Log.d("abc", "using chroma now 2")
+                        val r = ((flutterArCoreNode.mediaInfo.chromaColor and 0xFF0000) shr 16) / 255F
+                        val g = ((flutterArCoreNode.mediaInfo.chromaColor and 0xFF00) shr 8) / 255F
+                        val b = (flutterArCoreNode.mediaInfo.chromaColor and 0xFF) / 255F
+
+                        anchorNode.renderableInstance!!.getMaterial().setFloat4("chromaKeyColor", Color(r, g, b))
+                    }
+
+                    val mediaPlayer = MediaPlayer.create(activity.applicationContext, Uri.parse(flutterArCoreNode.objectUrl))
+//                    mediaPlayer.setDataSource(activity.applicationContext, Uri.parse(flutterArCoreNode.objectUrl))
+                    mediaPlayer.isLooping = true
+                    mediaPlayer.setSurface(externalTexture.surface)
+                    anchorNode.renderableInstance!!.material.setExternalTexture("videoTexture", externalTexture)
+                    mediaPlayer.start()
+                }
+
+                anchorNode.renderableInstance!!.animate(true).start()
+
                 Log.i(TAG, "addNodeWithAnchor inserted ${anchorNode.name}")
                 attachNodeToParent(anchorNode, flutterArCoreNode.parentNodeName)
 
                 for (node in flutterArCoreNode.children) {
                     node.parentNodeName = flutterArCoreNode.name
+
                     onAddNode(node, null)
                 }
             }

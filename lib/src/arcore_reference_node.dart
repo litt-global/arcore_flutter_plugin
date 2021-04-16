@@ -1,6 +1,7 @@
 import 'package:vector_math/vector_math_64.dart';
 
 import 'arcore_node.dart';
+import 'arcore_media_info.dart';
 
 class ArCoreReferenceNode extends ArCoreNode {
   /// Filename of sfb object in assets folder (generated with Import Sceneform Asset)
@@ -14,16 +15,19 @@ class ArCoreReferenceNode extends ArCoreNode {
     String name,
     this.object3DFileName,
     this.objectUrl,
+    ArCoreMediaInfo mediaInfo,
     List<ArCoreNode> children = const [],
     Vector3 position,
     Vector3 scale,
     Vector4 rotation,
   }) : super(
-            name: name,
-            children: children,
-            position: position,
-            scale: scale,
-            rotation: rotation);
+          name: name,
+          mediaInfo: mediaInfo,
+          children: children,
+          position: position,
+          scale: scale,
+          rotation: rotation,
+        );
 
   @override
   Map<String, dynamic> toMap() => <String, dynamic>{

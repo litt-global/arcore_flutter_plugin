@@ -28,7 +28,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
 
     private val TAG: String = ArCoreAugmentedImagesView::class.java.name
     private var sceneUpdateListener: Scene.OnUpdateListener
-    // Augmented image and its associated center pose anchor, keyed by index of the augmented image in
+    // Augmented mediaInfo and its associated center pose anchor, keyed by index of the augmented mediaInfo in
     // the
     // database.
     private val augmentedImageMap = HashMap<Int, Pair<AugmentedImage, AnchorNode>>()
@@ -95,11 +95,11 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
         }
     }
 
-/*    fun setImage(image: AugmentedImage, anchorNode: AnchorNode) {
+/*    fun setImage(mediaInfo: AugmentedImage, anchorNode: AnchorNode) {
         if (!mazeRenderable.isDone) {
             Log.d(TAG, "loading maze renderable still in progress. Wait to render again")
             CompletableFuture.allOf(mazeRenderable)
-                    .thenAccept { aVoid: Void -> setImage(image, anchorNode) }
+                    .thenAccept { aVoid: Void -> setImage(mediaInfo, anchorNode) }
                     .exceptionally { throwable ->
                         Log.e(TAG, "Exception loading", throwable)
                         null
@@ -107,16 +107,16 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             return
         }
 
-        // Set the anchor based on the center of the image.
-        // anchorNode.anchor = image.createAnchor(image.centerPose)
+        // Set the anchor based on the center of the mediaInfo.
+        // anchorNode.anchor = mediaInfo.createAnchor(mediaInfo.centerPose)
 
         val mazeNode = Node()
         mazeNode.setParent(anchorNode)
         mazeNode.renderable = mazeRenderable.getNow(null)
 
-        *//* // Make sure longest edge fits inside the image
+        *//* // Make sure longest edge fits inside the mediaInfo
          val maze_edge_size = 492.65f
-         val max_image_edge = Math.max(image.extentX, image.extentZ)
+         val max_image_edge = Math.max(mediaInfo.extentX, mediaInfo.extentZ)
          val maze_scale = max_image_edge / maze_edge_size
  
          // Scale Y extra 10 times to lower the wall of maze
@@ -171,7 +171,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
                             }
                         }
                     } else {
-                        result.error("attachObjectToAugmentedImage error", "Augmented image there isn't ona hashmap", null)
+                        result.error("attachObjectToAugmentedImage error", "Augmented mediaInfo there isn't ona hashmap", null)
                     }
                 }
                 "removeARCoreNodeWithIndex" -> {
@@ -263,11 +263,11 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             bytes?.let {
                 if (useSingleImage) {
                     if (!addImageToAugmentedImageDatabase(config, bytes)) {
-                        throw Exception("Could not setup augmented image database")
+                        throw Exception("Could not setup augmented mediaInfo database")
                     }
                 } else {
                     if (!useExistingAugmentedImageDatabase(config, bytes)) {
-                        throw Exception("Could not setup augmented image database")
+                        throw Exception("Could not setup augmented mediaInfo database")
                     }
                 }
             }
@@ -287,7 +287,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
             bytesMap?.let {
                 if (!addMultipleImagesToAugmentedImageDatabase(config, bytesMap)) {
-                    throw Exception("Could not setup augmented image database")
+                    throw Exception("Could not setup augmented mediaInfo database")
                 }
             }
             session.configure(config)
@@ -334,13 +334,13 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             return false
         }
 
-        // If the physical size of the image is known, you can instead use:
+        // If the physical size of the mediaInfo is known, you can instead use:
         //     augmentedImageDatabase.addImage("image_name", augmentedImageBitmap, widthInMeters);
         // This will improve the initial detection speed. ARCore will still actively estimate the
-        // physical size of the image as it is viewed from multiple viewpoints.
+        // physical size of the mediaInfo as it is viewed from multiple viewpoints.
         /* } else {
              // This is an alternative way to initialize an AugmentedImageDatabase instance,
-             // load a pre-existing augmented image database.
+             // load a pre-existing augmented mediaInfo database.
              try {
  //                getAssets().open("sample_database.imgdb").use({ `is` -> augmentedImageDatabase = AugmentedImageDatabase.deserialize(session, `is`) })
  //                val inputStream = ByteArrayInputStream(bytes)
@@ -348,7 +348,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
                  augmentedImageDatabase = null
                  return false
              } catch (e: IOException) {
-                 Log.e(TAG, "IO exception loading augmented image database.", e)
+                 Log.e(TAG, "IO exception loading augmented mediaInfo database.", e)
                  return false
              }*/
 
@@ -365,7 +365,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             config.augmentedImageDatabase = augmentedImageDatabase
             true
         } catch (e: IOException) {
-            Log.e(TAG, "IO exception loading augmented image database.", e)
+            Log.e(TAG, "IO exception loading augmented mediaInfo database.", e)
             false
         }
     }
@@ -375,7 +375,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
        try {
            return  BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.size)
         } catch (e: Exception) {
-            Log.e(TAG, "IO exception loading augmented image bitmap.", e)
+            Log.e(TAG, "IO exception loading augmented mediaInfo bitmap.", e)
             return  null
         }
     }

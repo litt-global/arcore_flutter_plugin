@@ -1,15 +1,14 @@
-import 'package:arcore_flutter_plugin/src/arcore_image.dart';
+import 'package:arcore_flutter_plugin/src/arcore_media_info.dart';
 import 'package:arcore_flutter_plugin/src/utils/vector_utils.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_math/vector_math_64.dart';
-import 'package:arcore_flutter_plugin/src/utils/random_string.dart'
-    as random_string;
+import 'package:arcore_flutter_plugin/src/utils/random_string.dart' as random_string;
 import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 
 class ArCoreNode {
   ArCoreNode({
     this.shape,
-    this.image,
+    this.mediaInfo,
     String name,
     Vector3 position,
     Vector3 scale,
@@ -19,7 +18,7 @@ class ArCoreNode {
         position = ValueNotifier(position),
         scale = ValueNotifier(scale),
         rotation = ValueNotifier(rotation),
-        assert(!(shape != null && image != null));
+        assert(!(shape != null && mediaInfo != null));
 
   final List<ArCoreNode> children;
 
@@ -33,7 +32,7 @@ class ArCoreNode {
 
   final String name;
 
-  final ArCoreImage image;
+  final ArCoreMediaInfo mediaInfo;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'dartType': runtimeType.toString(),
@@ -42,8 +41,7 @@ class ArCoreNode {
         'scale': convertVector3ToMap(scale.value),
         'rotation': convertVector4ToMap(rotation.value),
         'name': name,
-        'image': image?.toMap(),
-        'children':
-            this.children.map((arCoreNode) => arCoreNode.toMap()).toList(),
+        'mediaInfo': mediaInfo?.toMap(),
+        'children': this.children.map((arCoreNode) => arCoreNode.toMap()).toList(),
       }..removeWhere((String k, dynamic v) => v == null);
 }

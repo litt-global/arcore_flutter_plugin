@@ -15,9 +15,17 @@ class NodeFactory {
         fun makeNode(context: Context, flutterNode: FlutterArCoreNode, handler: NodeHandler) {
             Log.i(TAG, flutterNode.toString())
             val node = flutterNode.buildNode()
-            RenderableCustomFactory.makeRenderable(context, flutterNode) { renderable, t ->
+            RenderableCustomFactory.makeRenderable(context, flutterNode) { renderable, texture, material, t ->
+                Log.d("stvn", "HahHhahaha texture -1")
                 if (renderable != null) {
                     node.renderable = renderable
+                    Log.d("stvn", "HahHhahaha texture 0")
+                    if (texture != null) {
+                        Log.d("stvn", "HahHhahaha texture 1")
+                        node.renderableInstance!!.material.setInt("baseColorIndex", 0)
+                        node.renderableInstance!!.material.setTexture("baseColorMap", texture)
+                        Log.d("stvn", "HahHhahaha texture 2")
+                    }
                     handler(node, null)
                 }else{
                     handler(null,t)
