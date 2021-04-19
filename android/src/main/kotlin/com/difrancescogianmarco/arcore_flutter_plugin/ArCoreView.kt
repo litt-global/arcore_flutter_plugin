@@ -17,22 +17,21 @@ import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCo
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCorePose
 import com.difrancescogianmarco.arcore_flutter_plugin.models.RotatingNode
 import com.difrancescogianmarco.arcore_flutter_plugin.utils.ArCoreUtils
-import com.google.android.filament.filamat.MaterialBuilder
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.UnavailableException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import com.google.ar.sceneform.*
 import com.google.ar.sceneform.rendering.*
-//import com.google.ar.sceneform.ux.AugmentedFaceNode
 import io.flutter.app.FlutterApplication
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
-import android.R.attr.start
-
-
+import com.google.ar.sceneform.math.Vector3
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.concurrent.thread
 
 
 class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMessenger, id: Int, private val isAugmentedFaces: Boolean) : PlatformView, MethodChannel.MethodCallHandler {
@@ -335,7 +334,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         if (arSceneView == null) {
             return
         }
-        Log.d("stvn", "HahHhahaha texture -2")
+
         RenderableCustomFactory.makeRenderable(activity.applicationContext, flutterArCoreNode) { renderable, texture, material, t ->
             if (t != null) {
                 result.error("Make Renderable Error", t.localizedMessage, null)
@@ -348,95 +347,47 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 anchorNode.renderable = renderable
 
                 if (texture != null) {
-                    Log.d("stvn", "HahHhahaha texture 1")
                     anchorNode.renderableInstance!!.material.setInt("baseColorIndex", 0)
                     anchorNode.renderableInstance!!.material.setTexture("baseColorMap", texture)
-
-
-                    // Material repeating itself
-                    /*
-                    val filamentEngine = EngineInstance.getEngine().getFilamentEngine();
-
-                    MaterialBuilder.init();
-                    val materialBuilder = MaterialBuilder()
-                            // By default, materials are generated only for DESKTOP. Since we're an Android
-                            // app, we set the platform to MOBILE.
-                            .platform(MaterialBuilder.Platform.MOBILE)
-                            .name("Plain Video Material")
-                            .require(MaterialBuilder.VertexAttribute.UV0)
-                            // Defaults to UNLIT because it's the only emissive one
-                            .shading(MaterialBuilder.Shading.UNLIT)
-                            .doubleSided(true)
-                            .samplerParameter(MaterialBuilder.SamplerType.SAMPLER_EXTERNAL, MaterialBuilder.SamplerFormat.FLOAT, MaterialBuilder.SamplerPrecision.DEFAULT, "videoTexture")
-                            .optimization(MaterialBuilder.Optimization.NONE)
-
-                    val plainVideoMaterialPackage = materialBuilder
-                            .blending(MaterialBuilder.BlendingMode.OPAQUE)
-
-                            .material("void material(inout MaterialInputs material) {\n" +
-                                    "        prepareMaterial(material);\n" +
-                                    "\n" +
-                                    "        vec2 uv = getUV0();\n" +
-//                                    "        uv.x = uv.x * 1;\n" +
-//                                    "        uv.y = uv.y * 1;\n" +
-                                    "\n" +
-                                    "        material.baseColor = texture(materialParams_videoTexture, uv).rgba;\n" +
-                                    "    }")
-                            .build(filamentEngine)
-
-                    if (plainVideoMaterialPackage.isValid()) {
-                        Log.d("stvn", "HahHhahaha texture 2")
-                        val buffer = plainVideoMaterialPackage.getBuffer();
-                        Material.builder()
-                                .setSource(buffer)
-                                .build()
-                                .thenAccept {material ->
-                                    Log.d("stvn", "HahHhahaha texture 3")
-                                    anchorNode.renderableInstance!!.setMaterial(material)
-                                    anchorNode.renderableInstance!!.animate(true).start()
-
-                                    Log.i(TAG, "addNodeWithAnchor inserted ${anchorNode.name}")
-                                    attachNodeToParent(anchorNode, flutterArCoreNode.parentNodeName)
-
-                                    for (node in flutterArCoreNode.children) {
-                                        node.parentNodeName = flutterArCoreNode.name
-
-                                        onAddNode(node, null)
-                                    }
-                                }
-                                .exceptionally { throwable ->
-                                    Log.i(TAG, "renderable error ${throwable.localizedMessage}")
-                                    null
-                                }
-                    }
-                    */
-                    Log.d("stvn", "HahHhahaha texture 4")
                 }
 
-
                 if (material != null) {
-                    val externalTexture = ExternalTexture()
-
                     anchorNode.renderableInstance!!.setMaterial(material)
+                }
 
-                    if (flutterArCoreNode.mediaInfo != null && flutterArCoreNode.mediaInfo.chromaColor != null) {
-                        Log.d("abc", "using chroma now 2")
-                        val r = ((flutterArCoreNode.mediaInfo.chromaColor and 0xFF0000) shr 16) / 255F
-                        val g = ((flutterArCoreNode.mediaInfo.chromaColor and 0xFF00) shr 8) / 255F
-                        val b = (flutterArCoreNode.mediaInfo.chromaColor and 0xFF) / 255F
+                if (flutterArCoreNode.mediaInfo?.isVideo == true) {
+                    anchorNode.localScale = Vector3(200 / 1920f, 200 / 1080f, 1f)
+
+                    if (flutterArCoreNode.mediaInfo?.chromaColor != null) {
+                        val chroma = flutterArCoreNode.mediaInfo.chromaColor
+                        val r = ((chroma and 0xFF0000) shr 16) / 255F
+                        val g = ((chroma and 0xFF00) shr 8) / 255F
+                        val b = (chroma and 0xFF) / 255F
 
                         anchorNode.renderableInstance!!.getMaterial().setFloat4("chromaKeyColor", Color(r, g, b))
                     }
 
-                    val mediaPlayer = MediaPlayer.create(activity.applicationContext, Uri.parse(flutterArCoreNode.objectUrl))
-//                    mediaPlayer.setDataSource(activity.applicationContext, Uri.parse(flutterArCoreNode.objectUrl))
-                    mediaPlayer.isLooping = true
-                    mediaPlayer.setSurface(externalTexture.surface)
-                    anchorNode.renderableInstance!!.material.setExternalTexture("videoTexture", externalTexture)
-                    mediaPlayer.start()
+                    thread {
+                        val externalTexture = ExternalTexture()
+                        val mediaPlayer = MediaPlayer.create(activity.applicationContext, Uri.parse(flutterArCoreNode.objectUrl))
+                        mediaPlayer.isLooping = true
+                        mediaPlayer.setSurface(externalTexture.surface)
+                        anchorNode.renderableInstance!!.material.setExternalTexture("videoTexture", externalTexture)
+                        anchorNode.localScale = Vector3(mediaPlayer.videoWidth / 1920f, mediaPlayer.videoHeight / 1080f, 1f)
+                        mediaPlayer.start()
+                    }
                 }
 
-                anchorNode.renderableInstance!!.animate(true).start()
+                if (flutterArCoreNode.scale != null) {
+                    anchorNode.localScale = Vector3(
+                            anchorNode.localScale.x * flutterArCoreNode.scale.x,
+                            anchorNode.localScale.y * flutterArCoreNode.scale.y ,
+                            anchorNode.localScale.z * flutterArCoreNode.scale.z)
+                }
+
+                if (flutterArCoreNode.mediaInfo == null || flutterArCoreNode.mediaInfo.isGif) {
+                    anchorNode.renderableInstance!!.animate(true).start()
+                }
 
                 Log.i(TAG, "addNodeWithAnchor inserted ${anchorNode.name}")
                 attachNodeToParent(anchorNode, flutterArCoreNode.parentNodeName)
@@ -649,3 +600,72 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         result.success(null)
     }*/
 }
+
+
+
+
+
+
+
+
+
+
+
+
+// Daniel's Material repeating itself
+/*
+val filamentEngine = EngineInstance.getEngine().getFilamentEngine();
+
+MaterialBuilder.init();
+val materialBuilder = MaterialBuilder()
+        // By default, materials are generated only for DESKTOP. Since we're an Android
+        // app, we set the platform to MOBILE.
+        .platform(MaterialBuilder.Platform.MOBILE)
+        .name("Plain Video Material")
+        .require(MaterialBuilder.VertexAttribute.UV0)
+        // Defaults to UNLIT because it's the only emissive one
+        .shading(MaterialBuilder.Shading.UNLIT)
+        .doubleSided(true)
+        .samplerParameter(MaterialBuilder.SamplerType.SAMPLER_EXTERNAL, MaterialBuilder.SamplerFormat.FLOAT, MaterialBuilder.SamplerPrecision.DEFAULT, "videoTexture")
+        .optimization(MaterialBuilder.Optimization.NONE)
+
+val plainVideoMaterialPackage = materialBuilder
+        .blending(MaterialBuilder.BlendingMode.OPAQUE)
+
+        .material("void material(inout MaterialInputs material) {\n" +
+                "        prepareMaterial(material);\n" +
+                "\n" +
+                "        vec2 uv = getUV0();\n" +
+//                                    "        uv.x = uv.x * 1;\n" +
+//                                    "        uv.y = uv.y * 1;\n" +
+                "\n" +
+                "        material.baseColor = texture(materialParams_videoTexture, uv).rgba;\n" +
+                "    }")
+        .build(filamentEngine)
+
+if (plainVideoMaterialPackage.isValid()) {
+    Log.d("stvn", "HahHhahaha texture 2")
+    val buffer = plainVideoMaterialPackage.getBuffer();
+    Material.builder()
+            .setSource(buffer)
+            .build()
+            .thenAccept {material ->
+                Log.d("stvn", "HahHhahaha texture 3")
+                anchorNode.renderableInstance!!.setMaterial(material)
+                anchorNode.renderableInstance!!.animate(true).start()
+
+                Log.i(TAG, "addNodeWithAnchor inserted ${anchorNode.name}")
+                attachNodeToParent(anchorNode, flutterArCoreNode.parentNodeName)
+
+                for (node in flutterArCoreNode.children) {
+                    node.parentNodeName = flutterArCoreNode.name
+
+                    onAddNode(node, null)
+                }
+            }
+            .exceptionally { throwable ->
+                Log.i(TAG, "renderable error ${throwable.localizedMessage}")
+                null
+            }
+}
+*/
