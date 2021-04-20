@@ -5,7 +5,7 @@ class ArCoreCylinder extends ArCoreShape {
   ArCoreCylinder({
     this.radius = 0.5,
     this.height = 1.0,
-    List<ArCoreMaterial> materials,
+    List<ArCoreMaterial> materials = const [],
   }) : super(
           materials: materials,
         );

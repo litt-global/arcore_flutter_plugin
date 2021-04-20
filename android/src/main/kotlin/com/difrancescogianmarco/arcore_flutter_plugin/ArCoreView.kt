@@ -356,7 +356,9 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 }
 
                 if (flutterArCoreNode.mediaInfo?.isVideo == true) {
-                    anchorNode.localScale = Vector3(200 / 1920f, 200 / 1080f, 1f)
+                    if (flutterArCoreNode.shape == null) {
+                        anchorNode.localScale = Vector3(200 / 1920f, 200 / 1080f, 1f)
+                    }
 
                     if (flutterArCoreNode.mediaInfo?.chromaColor != null) {
                         val chroma = flutterArCoreNode.mediaInfo.chromaColor
@@ -373,7 +375,9 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                         mediaPlayer.isLooping = true
                         mediaPlayer.setSurface(externalTexture.surface)
                         anchorNode.renderableInstance!!.material.setExternalTexture("videoTexture", externalTexture)
-                        anchorNode.localScale = Vector3(mediaPlayer.videoWidth / 1920f, mediaPlayer.videoHeight / 1080f, 1f)
+                        if (flutterArCoreNode.shape == null) {
+                            anchorNode.localScale = Vector3(mediaPlayer.videoWidth / 1920f, mediaPlayer.videoHeight / 1080f, 1f)
+                        }
                         mediaPlayer.start()
                     }
                 }
@@ -600,72 +604,3 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         result.success(null)
     }*/
 }
-
-
-
-
-
-
-
-
-
-
-
-
-// Daniel's Material repeating itself
-/*
-val filamentEngine = EngineInstance.getEngine().getFilamentEngine();
-
-MaterialBuilder.init();
-val materialBuilder = MaterialBuilder()
-        // By default, materials are generated only for DESKTOP. Since we're an Android
-        // app, we set the platform to MOBILE.
-        .platform(MaterialBuilder.Platform.MOBILE)
-        .name("Plain Video Material")
-        .require(MaterialBuilder.VertexAttribute.UV0)
-        // Defaults to UNLIT because it's the only emissive one
-        .shading(MaterialBuilder.Shading.UNLIT)
-        .doubleSided(true)
-        .samplerParameter(MaterialBuilder.SamplerType.SAMPLER_EXTERNAL, MaterialBuilder.SamplerFormat.FLOAT, MaterialBuilder.SamplerPrecision.DEFAULT, "videoTexture")
-        .optimization(MaterialBuilder.Optimization.NONE)
-
-val plainVideoMaterialPackage = materialBuilder
-        .blending(MaterialBuilder.BlendingMode.OPAQUE)
-
-        .material("void material(inout MaterialInputs material) {\n" +
-                "        prepareMaterial(material);\n" +
-                "\n" +
-                "        vec2 uv = getUV0();\n" +
-//                                    "        uv.x = uv.x * 1;\n" +
-//                                    "        uv.y = uv.y * 1;\n" +
-                "\n" +
-                "        material.baseColor = texture(materialParams_videoTexture, uv).rgba;\n" +
-                "    }")
-        .build(filamentEngine)
-
-if (plainVideoMaterialPackage.isValid()) {
-    Log.d("stvn", "HahHhahaha texture 2")
-    val buffer = plainVideoMaterialPackage.getBuffer();
-    Material.builder()
-            .setSource(buffer)
-            .build()
-            .thenAccept {material ->
-                Log.d("stvn", "HahHhahaha texture 3")
-                anchorNode.renderableInstance!!.setMaterial(material)
-                anchorNode.renderableInstance!!.animate(true).start()
-
-                Log.i(TAG, "addNodeWithAnchor inserted ${anchorNode.name}")
-                attachNodeToParent(anchorNode, flutterArCoreNode.parentNodeName)
-
-                for (node in flutterArCoreNode.children) {
-                    node.parentNodeName = flutterArCoreNode.name
-
-                    onAddNode(node, null)
-                }
-            }
-            .exceptionally { throwable ->
-                Log.i(TAG, "renderable error ${throwable.localizedMessage}")
-                null
-            }
-}
-*/

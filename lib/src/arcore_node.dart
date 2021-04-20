@@ -17,8 +17,9 @@ class ArCoreNode {
   })  : name = name ?? random_string.randomString(),
         position = ValueNotifier(position),
         scale = ValueNotifier(scale),
-        rotation = ValueNotifier(rotation),
-        assert(!(shape != null && mediaInfo != null));
+        rotation = ValueNotifier(rotation) /*,
+        assert(!(shape != null && mediaInfo != null))*/
+  ;
 
   final List<ArCoreNode> children;
 

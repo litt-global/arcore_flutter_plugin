@@ -2,6 +2,7 @@ import 'package:vector_math/vector_math_64.dart';
 
 import 'arcore_node.dart';
 import 'arcore_media_info.dart';
+import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 
 class ArCoreReferenceNode extends ArCoreNode {
   /// Filename of sfb object in assets folder (generated with Import Sceneform Asset)
@@ -17,6 +18,7 @@ class ArCoreReferenceNode extends ArCoreNode {
     this.objectUrl,
     ArCoreMediaInfo mediaInfo,
     List<ArCoreNode> children = const [],
+    ArCoreShape shape,
     Vector3 position,
     Vector3 scale,
     Vector4 rotation,
@@ -24,6 +26,7 @@ class ArCoreReferenceNode extends ArCoreNode {
           name: name,
           mediaInfo: mediaInfo,
           children: children,
+          shape: shape,
           position: position,
           scale: scale,
           rotation: rotation,

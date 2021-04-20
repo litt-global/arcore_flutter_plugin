@@ -7,7 +7,7 @@ import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 class ArCoreCube extends ArCoreShape {
   ArCoreCube({
     this.size,
-    List<ArCoreMaterial> materials,
+    List<ArCoreMaterial> materials = const [],
   }) : super(
           materials: materials,
         );
