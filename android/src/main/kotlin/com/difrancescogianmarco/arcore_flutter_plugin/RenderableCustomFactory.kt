@@ -41,10 +41,7 @@ class RenderableCustomFactory {
         }
 
         private fun makeTextureAndMaterial(context: Context, flutterArCoreNode: FlutterArCoreNode, handler: MaterialHandler) {
-            if (flutterArCoreNode.shape?.materials != null && flutterArCoreNode.shape?.materials?.size > 0 ) {
-                // Shapes
-                makeShapeMaterial(context, flutterArCoreNode, handler)
-            } else if (flutterArCoreNode.objectUrl != null) {
+             if (flutterArCoreNode.objectUrl != null) {
                 if (flutterArCoreNode.mediaInfo == null) {
                     // 3D model
                     handler(null, null, null)
@@ -56,8 +53,11 @@ class RenderableCustomFactory {
                     handler(null, null, null)
                 } else {
                     // Static image
-                    makeImageTexture(context, flutterArCoreNode, handler)
+                    makeImageMaterial(context, flutterArCoreNode, handler)
                 }
+            } else if (flutterArCoreNode.shape?.materials != null && flutterArCoreNode.shape?.materials?.size > 0 ) {
+                // Shapes
+                makeShapeMaterial(context, flutterArCoreNode, handler)
             } else {
                 handler(null, null, null)
             }
@@ -172,7 +172,7 @@ class RenderableCustomFactory {
             MaterialBuilder.shutdown()
         }
 
-        private fun makeImageTexture(context: Context, flutterArCoreNode: FlutterArCoreNode, handler: MaterialHandler) {
+        private fun makeImageMaterial(context: Context, flutterArCoreNode: FlutterArCoreNode, handler: MaterialHandler) {
             Texture.builder()
                     .setSampler(Texture.Sampler.builder()
                             .setMinFilter(Texture.Sampler.MinFilter.LINEAR_MIPMAP_LINEAR)
@@ -183,7 +183,14 @@ class RenderableCustomFactory {
                     .setUsage(Texture.Usage.COLOR)
                     .build()
                     .thenAccept { texture ->
-                        handler(texture, null, null)
+                        MaterialCustomFactory.makeWithTexture(context, texture, false, flutterArCoreNode.shape!!.materials[0])
+                                ?.thenAccept { material: Material ->
+                                    handler(texture, material, null)
+                                }?.exceptionally { throwable ->
+                                    Log.i(TAG, "material error ${throwable}")
+                                    handler(null, null, throwable)
+                                    return@exceptionally null
+                                }
                     }
                     .exceptionally { throwable ->
                         handler(null, null, throwable)
@@ -292,50 +299,39 @@ class RenderableCustomFactory {
 
 
 
-
-
-
-
-
 //            // Textured static mediaInfo
-//            ModelRenderable.builder()
-//                .setSource(context, Uri.parse("models/cube.glb"))
-//                .setIsFilamentGltf(true)
-//                .build()
-//                .thenAccept { model ->
+//            Texture.builder()
+//                    .setSampler(Texture.Sampler.builder()
+//                            .setMinFilter(Texture.Sampler.MinFilter.LINEAR_MIPMAP_LINEAR)
+//                            .setMagFilter(Texture.Sampler.MagFilter.LINEAR)
+//                            .setWrapMode(Texture.Sampler.WrapMode.MIRRORED_REPEAT)
+//                            .build())
+//                    .setSource(context, Uri.parse("textures/rock.jpg"))
+//                    .setUsage(Texture.Usage.COLOR)
+//                    .build()
+//                    .thenAccept { texture ->
+//                        MaterialCustomFactory.makeWithTexture(context, texture, false, flutterArCoreNode.shape!!.materials[0])
+//                                ?.thenAccept { material: Material ->
+////                                    val xxx = ShapeFactory.makeCube(Vector3(0.5f, 0.5f, 0.5f), Vector3(0.0f, 0.15f, 0.0f), material)
+////                                    handler(xxx, null, null, null)
 //
-//                    Texture.builder()
-//                        .setSampler(Texture.Sampler.builder()
-//                                .setMinFilter(Texture.Sampler.MinFilter.LINEAR_MIPMAP_LINEAR)
-//                                .setMagFilter(Texture.Sampler.MagFilter.LINEAR)
-//                                .setWrapMode(Texture.Sampler.WrapMode.MIRRORED_REPEAT)
-//                                .build())
-//                        .setSource(context, Uri.parse("textures/rock.jpg"))
-//                        .setUsage(Texture.Usage.COLOR)
-//                        .build()
-//                        .thenAccept { texture ->
-////                            MaterialCustomFactory.makeWithColor(context, flutterArCoreNode.shape!!.materials[0])
-////                                    ?.thenAccept { material: Material ->
-////                                        val xxx = ShapeFactory.makeCube(Vector3(0.5f, 0.5f, 0.5f), Vector3(0.0f, 0.15f, 0.0f), material)
-////                                        Log.d("xxx", "texture " + texture)
-////                                        Log.d("xxx", "model " + xxx)
-////                                        handler(xxx, texture, null, null)
-////                                    }?.exceptionally { throwable ->
-////                                        Log.i(TAG, "material error ${throwable}")
-////                                        handler(null, null, null, throwable)
-////                                        return@exceptionally null
-////                                    }
+//                                    makeModel(context, flutterArCoreNode, texture, material) { model, throwable ->
+//                                        handler(model, null, null, throwable)
+//                                    }
 //
-//                            handler(model, texture, null, null)
-//                        }
-//                        .exceptionally { throwable ->
-//                            handler(null, null, null, throwable)
-//                            Log.i(TAG, "renderable error ${throwable.localizedMessage}")
-//                            null
-//                        }
-//                }
-//                .exceptionally { throwable ->
-//                    handler(null, null, null, throwable)
-//                    Log.i(TAG, "renderable error ${throwable.localizedMessage}")
-//                    null
-//                }
+//                                }?.exceptionally { throwable ->
+//                                    Log.i(TAG, "material error ${throwable}")
+//                                    handler(null, null, null, throwable)
+//                                    return@exceptionally null
+//                                }
+//                    }
+//                    .exceptionally { throwable ->
+//                        handler(null, null, null, throwable)
+//                        Log.i(TAG, "renderable error ${throwable.localizedMessage}")
+//                        null
+//                    }
+//
+//            return
+
+
+
