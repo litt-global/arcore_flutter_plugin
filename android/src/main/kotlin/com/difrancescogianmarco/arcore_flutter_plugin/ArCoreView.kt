@@ -46,6 +46,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
     private val RC_PERMISSIONS = 0x123
     private var sceneUpdateListener: Scene.OnUpdateListener
     private var faceSceneUpdateListener: Scene.OnUpdateListener
+    private var mediaPlayers: MutableList<MediaPlayer> = mutableListOf()
 
     //AUGMENTEDFACE
     private var faceRegionsRenderable: ModelRenderable? = null
@@ -380,6 +381,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                             anchorNode.localScale = Vector3(mediaPlayer.videoWidth / 1920f, mediaPlayer.videoHeight / 1080f, 1f)
                         }
                         mediaPlayer.start()
+                        mediaPlayers.add(mediaPlayer)
                     }
                 }
 
@@ -481,14 +483,24 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
     }
 
     override fun getView(): View {
-        return arSceneView as View
+        if(arSceneView != null){
+            return arSceneView as View
+        }
+        return View(activity.applicationContext)
     }
 
     override fun dispose() {
+        for (mediaPlayer in mediaPlayers) {
+            mediaPlayer.stop()
+            mediaPlayer.release()
+        }
+
         if (arSceneView != null) {
             onPause()
             onDestroy()
         }
+
+        methodChannel.setMethodCallHandler(null)
     }
 
     fun onResume() {
