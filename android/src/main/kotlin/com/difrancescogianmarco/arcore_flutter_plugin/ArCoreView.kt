@@ -342,7 +342,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             }
             val myAnchor = arSceneView?.session?.createAnchor(Pose(flutterArCoreNode.getPosition(), flutterArCoreNode.getRotation()))
             if (myAnchor != null) {
-                val anchorNode = AnchorNode(myAnchor)
+                val anchorNode = flutterArCoreNode.buildNode() //AnchorNode(myAnchor)
                 anchorNode.name = flutterArCoreNode.name
                 anchorNode.renderable = renderable
 

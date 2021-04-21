@@ -59,7 +59,7 @@ class FlutterArCoreNode(map: HashMap<String, *>) {
     }
 
     private fun getDegreesPerSecond(degreesPerSecond: Double?): Float? {
-        if (dartType == "ArCoreRotatingNode" && degreesPerSecond != null) {
+        if (degreesPerSecond != null) {
             return degreesPerSecond.toFloat()
         }
         return null
@@ -88,6 +88,7 @@ class FlutterArCoreNode(map: HashMap<String, *>) {
                 "position: $position\n" +
                 "scale: $scale\n" +
                 "rotation: $rotation\n" +
+                "degreesPerSecond $degreesPerSecond\n" +
                 "parentNodeName: $parentNodeName"
     }
 
