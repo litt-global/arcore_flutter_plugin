@@ -177,13 +177,10 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 removeNode(map["nodeName"] as String, result)
             }
             "positionChanged" -> {
-                Log.i(TAG, " positionChanged")
-
+                updatePosition(call, result)
             }
             "rotationChanged" -> {
-                Log.i(TAG, " rotationChanged")
                 updateRotation(call, result)
-
             }
             "updateMaterials" -> {
                 Log.i(TAG, " updateMaterials")
@@ -204,11 +201,16 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                 onResume()
             }
             "getTrackingState" -> {
-                Log.i(TAG, "1/3: Requested tracking state, returning that back to Flutter now")
-
+                // Log.i(TAG, "1/3: Requested tracking state, returning that back to Flutter now")
                 val trState = arSceneView?.arFrame?.camera?.trackingState
-                Log.i(TAG, "2/3: Tracking state is " + trState.toString())
+                // Log.i(TAG, "2/3: Tracking state is " + trState.toString())
                 methodChannel.invokeMethod("getTrackingState", trState.toString())
+            }
+            "getCameraPosition" -> {
+                getCameraPosition(result)
+            }
+            "getCameraEulerAngles" -> {
+                getCameraEulerAngles(result)
             }
             else -> {
             }
@@ -457,6 +459,21 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         result.success(null)
     }
 
+    fun updatePosition(call: MethodCall, result: MethodChannel.Result) {
+        val name = call.argument<String>("name")
+        val node = arSceneView?.scene?.findByName(name)
+
+        val x = call.argument<Double?>("x")
+        val y = call.argument<Double?>("y")
+        val z = call.argument<Double?>("z")
+
+        if (x != null && y != null && z != null) {
+            node?.localPosition = Vector3(x.toFloat(), y.toFloat(), z.toFloat())
+        }
+
+        result.success(null)
+    }
+
     fun updateRotation(call: MethodCall, result: MethodChannel.Result) {
         val name = call.argument<String>("name")
         val node = arSceneView?.scene?.findByName(name) as RotatingNode
@@ -480,6 +497,53 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
             node.renderable?.material = material
         }
         result.success(null)
+    }
+
+    fun getCameraPosition(result: MethodChannel.Result) {
+        val position = arSceneView?.scene?.camera?.worldPosition;
+        if (position == null) {
+            result.success(null)
+        } else {
+            result.success(arrayOf(position.x, position.y, position.z).toList())
+        }
+    }
+
+    fun getCameraEulerAngles(result: MethodChannel.Result) {
+        val angles = Vector3()
+        val forward = arSceneView?.scene?.camera?.forward
+        val q = arSceneView?.scene?.camera?.worldRotation
+
+        if (q == null || forward == null) {
+            result.success(null)
+            return
+        }
+
+        // roll (x-axis rotation)
+        val sinr_cosp = 2.0 * (q.w * q.x + q.y * q.z)
+        val cosr_cosp = 1 - 2.0 * (q.x * q.x + q.y * q.y)
+        angles.x = Math.atan2(sinr_cosp, cosr_cosp).toFloat()
+
+        // pitch (y-axis rotation)
+        val sinp = 2.0 * (q.w * q.y - q.z * q.x)
+        if (Math.abs(sinp) >= 1)
+            angles.y = Math.copySign(Math.PI / 2, sinp).toFloat() // use 90 degrees if out of range
+        else
+            angles.y = Math.asin(sinp).toFloat()
+
+        if (forward.z > 0) {
+            if (angles.y > 0) {
+                angles.y = (Math.PI - angles.y).toFloat()
+            } else {
+                angles.y = (-Math.PI - angles.y).toFloat()
+            }
+        }
+
+        // yaw (z-axis rotation)
+        val siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
+        val cosy_cosp = 1 - 2.0 * (q.y * q.y + q.z * q.z)
+        angles.z = Math.atan2(siny_cosp, cosy_cosp).toFloat()
+
+        result.success(arrayOf(angles.x, angles.y, angles.z).toList())
     }
 
     override fun getView(): View {
