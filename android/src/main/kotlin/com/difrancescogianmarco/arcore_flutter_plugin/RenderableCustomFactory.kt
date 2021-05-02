@@ -2,6 +2,7 @@ package com.difrancescogianmarco.arcore_flutter_plugin
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
@@ -35,6 +36,8 @@ class RenderableCustomFactory {
 
             makeTextureAndMaterial(context, flutterArCoreNode) { texture, material, throwable ->
                 makeModel(context, flutterArCoreNode, texture, material) { model, throwable ->
+                    model?.isShadowCaster = false
+                    model?.isShadowCaster = false
                     handler(model, texture, material, throwable)
                 }
             }
@@ -131,8 +134,8 @@ class RenderableCustomFactory {
                                         "    prepareMaterial(material);\n" +
                                         "    vec4 color = texture(materialParams_videoTexture, getUV0()).rgba;\n" +
                                         "    vec3 keyColor = materialParams.chromaKeyColor.rgb;\n" +
-                                        "    float threshold = 0.675;\n" +
-                                        "    float slope = 0.2;\n" +
+                                        "    float threshold = 0.775;\n" +
+                                        "    float slope = 0.01;\n" +
                                         "    float distance = abs(length(abs(keyColor - color.rgb)));\n" +
                                         "    float edge0 = threshold * (1.0 - slope);\n" +
                                         "    float alpha = smoothstep(edge0, threshold, distance);\n" +
@@ -173,13 +176,22 @@ class RenderableCustomFactory {
         }
 
         private fun makeImageMaterial(context: Context, flutterArCoreNode: FlutterArCoreNode, handler: MaterialHandler) {
+            val url = URL(flutterArCoreNode.objectUrl)
+            val stream = url.openConnection().getInputStream()
+            var bmp = BitmapFactory.decodeStream(stream)
+
+            if (bmp.config != Bitmap.Config.ARGB_8888) {
+                bmp = bmp.copy(Bitmap.Config.ARGB_8888,true)
+            }
+
             Texture.builder()
                     .setSampler(Texture.Sampler.builder()
                             .setMinFilter(Texture.Sampler.MinFilter.LINEAR_MIPMAP_LINEAR)
                             .setMagFilter(Texture.Sampler.MagFilter.LINEAR)
                             .setWrapMode(Texture.Sampler.WrapMode.MIRRORED_REPEAT)
                             .build())
-                    .setSource(context, Uri.parse(flutterArCoreNode.objectUrl))
+                    //.setSource(context, Uri.parse(flutterArCoreNode.objectUrl))
+                    .setSource(bmp)
                     .setUsage(Texture.Usage.COLOR)
                     .build()
                     .thenAccept { texture ->
