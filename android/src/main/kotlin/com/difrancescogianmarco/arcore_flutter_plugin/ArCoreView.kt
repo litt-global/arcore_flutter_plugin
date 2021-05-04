@@ -374,10 +374,11 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
 
                     thread {
                         val externalTexture = ExternalTexture()
+                        val volume = if (flutterArCoreNode.mediaInfo.isMuted) 0.0f else 1.0f
                         val mediaPlayer = MediaPlayer.create(activity.applicationContext, Uri.parse(flutterArCoreNode.objectUrl))
                         mediaPlayer.isLooping = true
                         mediaPlayer.setSurface(externalTexture.surface)
-                        mediaPlayer.setVolume(1.0f, 1.0f)
+                        mediaPlayer.setVolume(volume, volume)
                         anchorNode.renderableInstance!!.material.setExternalTexture("videoTexture", externalTexture)
                         if (flutterArCoreNode.shape == null) {
                             anchorNode.localScale = Vector3(mediaPlayer.videoWidth / 1920f, mediaPlayer.videoHeight / 1080f, 1f)
