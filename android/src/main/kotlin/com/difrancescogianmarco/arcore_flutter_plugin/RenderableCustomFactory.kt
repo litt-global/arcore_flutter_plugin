@@ -118,41 +118,59 @@ class RenderableCustomFactory {
                     .optimization(MaterialBuilder.Optimization.NONE)
 
             var materialPackage: MaterialPackage
+            var rotateUv = ""
+
+            if (flutterArCoreNode.mediaInfo?.rotate == 90 || flutterArCoreNode.mediaInfo?.rotate == 270) {
+                rotateUv =
+                        "    float angle = -radians(90.0);\n" +
+                        "    mat2 rotation = mat2(cos(angle), sin(angle), -sin(angle), cos(angle));\n" +
+                        "    vec2 pivot = vec2(0.5, 0.5);\n" +
+                        "    uv = rotation * (uv - pivot) + pivot;\n"
+            }
 
             if(flutterArCoreNode.mediaInfo?.chromaColor != null){
+                val shaderCode =
+                        "vec3 desaturate(vec3 color, float amount) {\n" +
+                        "    // Convert color to grayscale using Luma formula:\n" +
+                        "    // https://en.wikipedia.org/wiki/Luma_%28video%29\n" +
+                        "    vec3 gray = vec3(dot(vec3(0.2126, 0.7152, 0.0722), color));\n" +
+                        "    return vec3(mix(color, gray, amount));\n" +
+                        "}\n" +
+                        "void material(inout MaterialInputs material) {\n" +
+                        "    prepareMaterial(material);\n" +
+                        "    vec2 uv = getUV0();\n" +
+                        "    ${rotateUv}" +
+                        "    vec4 color = texture(materialParams_videoTexture, uv).rgba;\n" +
+                        "    vec3 keyColor = materialParams.chromaKeyColor.rgb;\n" +
+                        "    float threshold = 0.775;\n" +
+                        "    float slope = 0.01;\n" +
+                        "    float distance = abs(length(abs(keyColor - color.rgb)));\n" +
+                        "    float edge0 = threshold * (1.0 - slope);\n" +
+                        "    float alpha = smoothstep(edge0, threshold, distance);\n" +
+                        "    color.rgb = desaturate(color.rgb, 1.0 - (alpha * alpha * alpha));\n" +
+                        "\n" +
+                        "    material.baseColor.a = alpha;\n" +
+                        "    material.baseColor.rgb = inverseTonemapSRGB(color.rgb);\n" +
+                        "    material.baseColor.rgb *= material.baseColor.a;\n" +
+                        "}\n"
+
                 materialPackage = materialBuilder
                         .uniformParameter(MaterialBuilder.UniformType.FLOAT4, "chromaKeyColor")
                         .blending(MaterialBuilder.BlendingMode.TRANSPARENT)
-                        .material(
-                                "vec3 desaturate(vec3 color, float amount) {\n" +
-                                        "    // Convert color to grayscale using Luma formula:\n" +
-                                        "    // https://en.wikipedia.org/wiki/Luma_%28video%29\n" +
-                                        "    vec3 gray = vec3(dot(vec3(0.2126, 0.7152, 0.0722), color));\n" +
-                                        "    return vec3(mix(color, gray, amount));\n" +
-                                        "}\n" +
-                                        "void material(inout MaterialInputs material) {\n" +
-                                        "    prepareMaterial(material);\n" +
-                                        "    vec4 color = texture(materialParams_videoTexture, getUV0()).rgba;\n" +
-                                        "    vec3 keyColor = materialParams.chromaKeyColor.rgb;\n" +
-                                        "    float threshold = 0.775;\n" +
-                                        "    float slope = 0.01;\n" +
-                                        "    float distance = abs(length(abs(keyColor - color.rgb)));\n" +
-                                        "    float edge0 = threshold * (1.0 - slope);\n" +
-                                        "    float alpha = smoothstep(edge0, threshold, distance);\n" +
-                                        "    color.rgb = desaturate(color.rgb, 1.0 - (alpha * alpha * alpha));\n" +
-                                        "\n" +
-                                        "    material.baseColor.a = alpha;\n" +
-                                        "    material.baseColor.rgb = inverseTonemapSRGB(color.rgb);\n" +
-                                        "    material.baseColor.rgb *= material.baseColor.a;\n" +
-                                        "}\n")
+                        .material(shaderCode)
                         .build()
             } else {
+                val shaderCode =
+                        "void material(inout MaterialInputs material) {\n" +
+                        "    prepareMaterial(material);\n" +
+                        "    vec2 uv = getUV0();\n" +
+                        "    ${rotateUv}" +
+                        "    material.baseColor = texture(materialParams_videoTexture, uv).rgba;\n" +
+                        "}\n";
+
                 materialPackage = materialBuilder
                         .blending(MaterialBuilder.BlendingMode.OPAQUE)
-                        .material("void material(inout MaterialInputs material) {\n" +
-                                "    prepareMaterial(material);\n" +
-                                "    material.baseColor = texture(materialParams_videoTexture, getUV0()).rgba;\n" +
-                                "}\n")
+                        .material(shaderCode)
                         .build(filamentEngine)
             }
 
