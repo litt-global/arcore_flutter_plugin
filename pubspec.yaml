@@ -9,9 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  vector_math: ^2.0.8
-  meta: ^1.1.8
-  equatable: ^1.1.0
+  vector_math: ^2.1.1
+  meta: ^1.7.0
+  equatable: ^2.0.3
 
 dev_dependencies:
   flutter_test:
