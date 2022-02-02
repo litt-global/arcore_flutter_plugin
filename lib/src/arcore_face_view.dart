@@ -8,11 +8,11 @@ import 'arcore_view.dart';
 typedef void ArCoreFaceViewCreatedCallback(ArCoreFaceController controller);
 
 class ArCoreFaceView extends StatefulWidget {
-  final ArCoreFaceViewCreatedCallback onArCoreViewCreated;
+  final ArCoreFaceViewCreatedCallback? onArCoreViewCreated;
   final bool enableAugmentedFaces;
 
   const ArCoreFaceView({
-    Key key,
+    Key? key,
     this.onArCoreViewCreated,
     this.enableAugmentedFaces = false,
   }) : super(key: key);
@@ -21,11 +21,10 @@ class ArCoreFaceView extends StatefulWidget {
   _ArCoreFaceViewState createState() => _ArCoreFaceViewState();
 }
 
-class _ArCoreFaceViewState extends State<ArCoreFaceView>
-    with WidgetsBindingObserver {
+class _ArCoreFaceViewState extends State<ArCoreFaceView> with WidgetsBindingObserver {
   @override
   void initState() {
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance?.addObserver(this);
     super.initState();
   }
 
@@ -41,8 +40,7 @@ class _ArCoreFaceViewState extends State<ArCoreFaceView>
       );
     }
     return Center(
-      child: Text(
-          '$defaultTargetPlatform is not  supported by the ar_view plugin'),
+      child: Text('$defaultTargetPlatform is not  supported by the ar_view plugin'),
     );
   }
 
@@ -50,7 +48,7 @@ class _ArCoreFaceViewState extends State<ArCoreFaceView>
     if (widget.onArCoreViewCreated == null) {
       return;
     }
-    widget.onArCoreViewCreated(
+    widget.onArCoreViewCreated!(
       ArCoreFaceController(
         id: id,
         enableAugmentedFaces: widget.enableAugmentedFaces,
@@ -60,7 +58,7 @@ class _ArCoreFaceViewState extends State<ArCoreFaceView>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance?.removeObserver(this);
     super.dispose();
   }
 }

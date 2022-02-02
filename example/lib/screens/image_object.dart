@@ -36,7 +36,7 @@ class _ImageObjectScreenState extends State<ImageObjectScreen> {
         (await rootBundle.load('assets/earth.jpg')).buffer.asUint8List();
 
     final earth = ArCoreNode(
-      image: ArCoreImage(bytes: bytes, width: 500, height: 500),
+      // image: ArCoreImage(bytes: bytes, width: 500, height: 500),
       position: hit.pose.translation + vector.Vector3(0.0, 0.0, 0.0),
       rotation: hit.pose.rotation + vector.Vector4(0.0, 0.0, 0.0, 0.0),
     );

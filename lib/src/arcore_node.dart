@@ -7,12 +7,12 @@ import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 
 class ArCoreNode {
   ArCoreNode({
-    this.shape,
+    required this.shape,
     this.mediaInfo,
-    String name,
-    Vector3 position,
-    Vector3 scale,
-    Vector4 rotation,
+    String? name,
+    required Vector3 position,
+    required Vector3 scale,
+    required Vector4 rotation,
     this.children = const [],
   })  : name = name ?? random_string.randomString(),
         position = ValueNotifier(position),
@@ -33,11 +33,11 @@ class ArCoreNode {
 
   final String name;
 
-  final ArCoreMediaInfo mediaInfo;
+  final ArCoreMediaInfo? mediaInfo;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'dartType': runtimeType.toString(),
-        'shape': shape?.toMap(),
+        'shape': shape.toMap(),
         'position': convertVector3ToMap(position.value),
         'scale': convertVector3ToMap(scale.value),
         'rotation': convertVector4ToMap(rotation.value),

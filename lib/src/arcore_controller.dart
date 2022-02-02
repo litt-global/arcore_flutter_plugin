@@ -1,10 +1,8 @@
 import 'dart:typed_data';
-
 import 'package:arcore_flutter_plugin/src/arcore_augmented_image.dart';
 import 'package:arcore_flutter_plugin/src/arcore_rotating_node.dart';
 import 'package:arcore_flutter_plugin/src/utils/vector_utils.dart';
 import 'package:flutter/services.dart';
-import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'arcore_hit_test_result.dart';
 
@@ -31,10 +29,10 @@ class ArCoreController {
   }
 
   ArCoreController({
-    int id,
+    required int id,
     this.enableTapRecognizer,
     this.enablePlaneRenderer,
-    this.enableUpdateListener,
+    this.enableUpdateListener = true,
 //    @required this.onUnsupported,
   }) {
     _channel = MethodChannel('arcore_flutter_plugin_$id');
@@ -43,17 +41,17 @@ class ArCoreController {
   }
 
   final bool enableUpdateListener;
-  final bool enableTapRecognizer;
-  final bool enablePlaneRenderer;
-  MethodChannel _channel;
-  StringResultHandler onError;
-  StringResultHandler onNodeTap;
+  final bool? enableTapRecognizer;
+  final bool? enablePlaneRenderer;
+  late MethodChannel _channel;
+  StringResultHandler? onError;
+  StringResultHandler? onNodeTap;
 
 //  UnsupportedHandler onUnsupported;
-  ArCoreHitResultHandler onPlaneTap;
-  ArCorePlaneHandler onPlaneDetected;
+  ArCoreHitResultHandler? onPlaneTap;
+  ArCorePlaneHandler? onPlaneDetected;
   String trackingState = '';
-  ArCoreAugmentedImageTrackingHandler onTrackingImage;
+  ArCoreAugmentedImageTrackingHandler? onTrackingImage;
 
   init() async {
     try {
@@ -72,25 +70,25 @@ class ArCoreController {
     switch (call.method) {
       case 'onError':
         if (onError != null) {
-          onError(call.arguments);
+          onError!(call.arguments);
         }
         break;
       case 'onNodeTap':
         if (onNodeTap != null) {
-          onNodeTap(call.arguments);
+          onNodeTap!(call.arguments);
         }
         break;
       case 'onPlaneTap':
         if (onPlaneTap != null) {
           final List<dynamic> input = call.arguments;
           final objects = input.cast<Map<dynamic, dynamic>>().map<ArCoreHitTestResult>((Map<dynamic, dynamic> h) => ArCoreHitTestResult.fromMap(h)).toList();
-          onPlaneTap(objects);
+          onPlaneTap!(objects);
         }
         break;
       case 'onPlaneDetected':
         if (enableUpdateListener && onPlaneDetected != null) {
           final plane = ArCorePlane.fromMap(call.arguments);
-          onPlaneDetected(plane);
+          onPlaneDetected!(plane);
         }
         break;
       case 'getTrackingState':
@@ -101,7 +99,7 @@ class ArCoreController {
       case 'onTrackingImage':
         print('flutter onTrackingImage');
         final arCoreAugmentedImage = ArCoreAugmentedImage.fromMap(call.arguments);
-        onTrackingImage(arCoreAugmentedImage);
+        onTrackingImage!(arCoreAugmentedImage);
         break;
       default:
         print('Unknowm method ${call.method} ');
@@ -109,35 +107,35 @@ class ArCoreController {
     return Future.value();
   }
 
-  Future<void> addArCoreNode(ArCoreNode node, {String parentNodeName}) {
+  Future<void> addArCoreNode(ArCoreNode node, {String? parentNodeName}) {
     assert(node != null);
-    final params = _addParentNodeNameToParams(node.toMap(), parentNodeName);
+    final params = _addParentNodeNameToParams(node.toMap(), parentNodeName ?? '');
     print(params.toString());
     _addListeners(node);
     return _channel.invokeMethod('addArCoreNode', params);
   }
 
-  Future<String> getTrackingState() async {
+  Future<dynamic> getTrackingState() async {
     return _channel.invokeMethod('getTrackingState');
   }
 
-  addArCoreNodeToAugmentedImage(ArCoreNode node, int index, {String parentNodeName}) {
+  addArCoreNodeToAugmentedImage(ArCoreNode node, int index, {String? parentNodeName}) {
     assert(node != null);
 
-    final params = _addParentNodeNameToParams(node.toMap(), parentNodeName);
+    final params = _addParentNodeNameToParams(node.toMap(), parentNodeName ?? '');
     return _channel.invokeMethod('attachObjectToAugmentedImage', {'index': index, 'node': params});
   }
 
-  Future<void> addArCoreNodeWithAnchor(ArCoreNode node, {String parentNodeName}) {
+  Future<void> addArCoreNodeWithAnchor(ArCoreNode node, {String? parentNodeName}) {
     assert(node != null);
-    final params = _addParentNodeNameToParams(node.toMap(), parentNodeName);
+    final params = _addParentNodeNameToParams(node.toMap(), parentNodeName ?? '');
     print(params.toString());
     _addListeners(node);
     print('---------_CALLING addArCoreNodeWithAnchor : $params');
     return _channel.invokeMethod('addArCoreNodeWithAnchor', params);
   }
 
-  Future<void> removeNode({@required String nodeName}) {
+  Future<void> removeNode({required String nodeName}) {
     assert(nodeName != null);
     return _channel.invokeMethod('removeARCoreNode', {'nodeName': nodeName});
   }
@@ -152,14 +150,14 @@ class ArCoreController {
     return results == null ? Vector3.zero() : Vector3.array(results.cast<double>());
   }
 
-  Map<String, dynamic> _addParentNodeNameToParams(Map geometryMap, String parentNodeName) {
-    if (parentNodeName?.isNotEmpty ?? false) geometryMap['parentNodeName'] = parentNodeName;
+  Map<dynamic, dynamic> _addParentNodeNameToParams(Map geometryMap, String parentNodeName) {
+    if (parentNodeName.isNotEmpty ?? false) geometryMap['parentNodeName'] = parentNodeName;
     return geometryMap;
   }
 
   void _addListeners(ArCoreNode node) {
     node.position.addListener(() => _handlePositionChanged(node));
-    node?.shape?.materials?.addListener(() => _updateMaterials(node));
+    node.shape?.materials.addListener(() => _updateMaterials(node));
 
     if (node is ArCoreRotatingNode) {
       node.degreesPerSecond.addListener(() => _handleRotationChanged(node));
@@ -167,7 +165,7 @@ class ArCoreController {
   }
 
   void _handlePositionChanged(ArCoreNode node) {
-    _channel.invokeMethod<void>('positionChanged', _getHandlerParams(node, convertVector3ToMap(node.position.value)));
+    _channel.invokeMethod<void>('positionChanged', _getHandlerParams(node, convertVector3ToMap(node.position.value)!));
   }
 
   void _handleRotationChanged(ArCoreRotatingNode node) {
@@ -175,29 +173,29 @@ class ArCoreController {
   }
 
   void _updateMaterials(ArCoreNode node) {
-    _channel.invokeMethod<void>('updateMaterials', _getHandlerParams(node, node.shape.toMap()));
+    _channel.invokeMethod<void>('updateMaterials', _getHandlerParams(node, node.shape!.toMap()));
   }
 
-  Map<String, dynamic> _getHandlerParams(ArCoreNode node, Map<String, dynamic> params) {
+  Map<String, dynamic>? _getHandlerParams(ArCoreNode node, Map<String, dynamic> params) {
     final Map<String, dynamic> values = <String, dynamic>{'name': node.name}..addAll(params);
     return values;
   }
 
-  Future<void> loadSingleAugmentedImage({@required Uint8List bytes}) {
+  Future<void> loadSingleAugmentedImage({required Uint8List bytes}) {
     assert(bytes != null);
     return _channel.invokeMethod('load_single_image_on_db', {
       'bytes': bytes,
     });
   }
 
-  Future<void> loadMultipleAugmentedImage({@required Map<String, Uint8List> bytesMap}) {
+  Future<void> loadMultipleAugmentedImage({required Map<String, Uint8List> bytesMap}) {
     assert(bytesMap != null);
     return _channel.invokeMethod('load_multiple_images_on_db', {
       'bytesMap': bytesMap,
     });
   }
 
-  Future<void> loadAugmentedImagesDatabase({@required Uint8List bytes}) {
+  Future<void> loadAugmentedImagesDatabase({required Uint8List bytes}) {
     assert(bytes != null);
     return _channel.invokeMethod('load_augmented_images_database', {
       'bytes': bytes,

@@ -1,20 +1,14 @@
-import 'dart:typed_data';
-
 class ArCoreMediaInfo {
   ArCoreMediaInfo({
-    this.isVideo,
-    this.isGif,
-    this.isMuted,
-    this.rotate,
-    this.chromaColor,
-    this.width,
-    this.height,
-  })  : assert(isVideo != null),
-        assert(isGif != null),
-        assert(isMuted != null),
-        assert(rotate != null),
-        assert(width != null && width > 0),
-        assert(height != null && height > 0);
+    required this.isVideo,
+    required this.isGif,
+    required this.isMuted,
+    required this.rotate,
+    required this.chromaColor,
+    required this.width,
+    required this.height,
+  })  : assert(width > 0),
+        assert(height > 0);
 
   final bool isVideo;
   final bool isGif;

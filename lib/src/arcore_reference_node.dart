@@ -8,24 +8,24 @@ import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 class ArCoreReferenceNode extends ArCoreNode {
   /// Filename of sfb object in assets folder (generated with Import Sceneform Asset)
   /// https://developers.google.com/ar/develop/java/sceneform/import-assets
-  final String object3DFileName;
+  final String? object3DFileName;
 
   /// Url of gltf object for remote rendering
-  final String objectUrl;
+  final String? objectUrl;
 
   // To spin the node
-  final ValueNotifier<double> degreesPerSecond;
+  final ValueNotifier<double>? degreesPerSecond;
 
   ArCoreReferenceNode({
-    String name,
+    String? name,
     this.object3DFileName,
     this.objectUrl,
-    ArCoreMediaInfo mediaInfo,
+    ArCoreMediaInfo? mediaInfo,
     List<ArCoreNode> children = const [],
-    ArCoreShape shape,
-    Vector3 position,
-    Vector3 scale,
-    Vector4 rotation,
+    required ArCoreShape shape,
+    required Vector3 position,
+    required Vector3 scale,
+    required Vector4 rotation,
     this.degreesPerSecond,
   }) : super(
           name: name,

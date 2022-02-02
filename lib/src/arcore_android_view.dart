@@ -6,12 +6,12 @@ typedef PlatformViewCreatedCallback = void Function(int id);
 
 class ArCoreAndroidView extends AndroidView {
   final String viewType;
-  final PlatformViewCreatedCallback onPlatformViewCreated;
+  final PlatformViewCreatedCallback? onPlatformViewCreated;
   final ArCoreViewType arCoreViewType;
 
   ArCoreAndroidView({
-    Key key,
-    @required this.viewType,
+    Key? key,
+    required this.viewType,
     this.onPlatformViewCreated,
     this.arCoreViewType = ArCoreViewType.STANDARDVIEW,
   }) : super(
