@@ -7,7 +7,7 @@ import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 
 class ArCoreNode {
   ArCoreNode({
-    required this.shape,
+    this.shape,
     this.mediaInfo,
     String? name,
     required Vector3 position,
@@ -23,7 +23,7 @@ class ArCoreNode {
 
   final List<ArCoreNode> children;
 
-  final ArCoreShape shape;
+  final ArCoreShape? shape;
 
   final ValueNotifier<Vector3> position;
 
@@ -37,7 +37,7 @@ class ArCoreNode {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'dartType': runtimeType.toString(),
-        'shape': shape.toMap(),
+        'shape': shape?.toMap(),
         'position': convertVector3ToMap(position.value),
         'scale': convertVector3ToMap(scale.value),
         'rotation': convertVector4ToMap(rotation.value),

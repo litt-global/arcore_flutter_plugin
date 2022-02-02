@@ -151,7 +151,7 @@ class ArCoreController {
   }
 
   Map<dynamic, dynamic> _addParentNodeNameToParams(Map geometryMap, String parentNodeName) {
-    if (parentNodeName.isNotEmpty ?? false) geometryMap['parentNodeName'] = parentNodeName;
+    if (parentNodeName.isNotEmpty) geometryMap['parentNodeName'] = parentNodeName;
     return geometryMap;
   }
 
@@ -203,11 +203,11 @@ class ArCoreController {
   }
 
   void dispose() {
-    _channel?.invokeMethod<void>('dispose');
+    _channel.invokeMethod<void>('dispose');
   }
 
   void resume() {
-    _channel?.invokeMethod<void>('resume');
+    _channel.invokeMethod<void>('resume');
   }
 
   Future<void> removeNodeWithIndex(int index) async {

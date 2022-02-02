@@ -22,7 +22,7 @@ class ArCoreReferenceNode extends ArCoreNode {
     this.objectUrl,
     ArCoreMediaInfo? mediaInfo,
     List<ArCoreNode> children = const [],
-    required ArCoreShape shape,
+    ArCoreShape? shape,
     required Vector3 position,
     required Vector3 scale,
     required Vector4 rotation,

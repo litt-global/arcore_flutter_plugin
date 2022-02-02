@@ -6,7 +6,7 @@ import 'package:arcore_flutter_plugin/src/shape/arcore_shape.dart';
 
 class ArCoreRotatingNode extends ArCoreNode {
   ArCoreRotatingNode({
-    required this.shape,
+    this.shape,
     double? degreesPerSecond,
     required Vector3 position,
     required Vector3 scale,
@@ -21,7 +21,7 @@ class ArCoreRotatingNode extends ArCoreNode {
           rotation: rotation,
         );
 
-  final ArCoreShape shape;
+  final ArCoreShape? shape;
 
   final ValueNotifier<double> degreesPerSecond;
 
