@@ -313,7 +313,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                             methodChannel.invokeMethod("onNodeTap", hitTestResult.node?.name)
                             return@setOnTouchListener true
                         }
-                        return@setOnTouchListener gestureDetector.onTouchEvent(event)
+                        return@setOnTouchListener gestureDetector.onTouchEvent(event!!)
                     }
         }
         val enableUpdateListener: Boolean? = call.argument("enableUpdateListener")
