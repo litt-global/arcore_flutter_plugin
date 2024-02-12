@@ -30,7 +30,7 @@ class ArcoreFlutterPlugin : FlutterPlugin, ActivityAware {
             Log.i(TAG, "registerWith")
             registrar
                     .platformViewRegistry()
-                    .registerViewFactory(CHANNEL_NAME, ArCoreViewFactory(registrar.activity(), registrar.messenger()))
+                    .registerViewFactory(CHANNEL_NAME, ArCoreViewFactory(registrar.activity()!!, registrar.messenger()))
         }
     }
 

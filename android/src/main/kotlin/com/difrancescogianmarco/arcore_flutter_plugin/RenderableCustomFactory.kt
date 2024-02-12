@@ -58,7 +58,7 @@ class RenderableCustomFactory {
                     // Static image
                     makeImageMaterial(context, flutterArCoreNode, handler)
                 }
-            } else if (flutterArCoreNode.shape?.materials != null && flutterArCoreNode.shape?.materials?.size > 0 ) {
+            } else if (flutterArCoreNode.shape?.materials != null && flutterArCoreNode.shape?.materials?.size!! > 0 ) {
                 // Shapes
                 makeShapeMaterial(context, flutterArCoreNode, handler)
             } else {
