@@ -12,7 +12,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
 
 class ArcoreFlutterPlugin : FlutterPlugin, ActivityAware {
 
@@ -25,13 +24,6 @@ class ArcoreFlutterPlugin : FlutterPlugin, ActivityAware {
         const val TAG = "ArCoreFlutterPlugin"
         
         private const val CHANNEL_NAME = "arcore_flutter_plugin"
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            Log.i(TAG, "registerWith")
-            registrar
-                    .platformViewRegistry()
-                    .registerViewFactory(CHANNEL_NAME, ArCoreViewFactory(registrar.activity()!!, registrar.messenger()))
-        }
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {

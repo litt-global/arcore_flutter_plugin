@@ -256,10 +256,10 @@ class RenderableCustomFactory {
                     .setSource(context, Uri.parse(flutterArCoreNode.objectUrl))
                     .setIsFilamentGltf(true)
                     .build()
-                    .thenAccept { model ->
+                    .thenAccept { model: ModelRenderable ->
                         handler(model, null)
                     }
-                    .exceptionally { throwable ->
+                    .exceptionally { throwable: Throwable ->
                         handler(null, throwable)
                         Log.i(TAG, "renderable error ${throwable.localizedMessage}")
                         null
@@ -313,10 +313,10 @@ class RenderableCustomFactory {
                     .setSource(context, Uri.parse("models/vertical_plane_1920x1080.glb"))
                     .setIsFilamentGltf(true)
                     .build()
-                    .thenAccept { model ->
+                    .thenAccept { model: ModelRenderable ->
                         handler(model, null)
                     }
-                    .exceptionally { throwable ->
+                    .exceptionally { throwable: Throwable ->
                         handler(null, throwable)
                         Log.i(TAG, "renderable error ${throwable.localizedMessage}")
                         null
