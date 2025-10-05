@@ -234,6 +234,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
                     val config = Config(session)
                     config.focusMode = Config.FocusMode.AUTO
                     config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+                    config.lightEstimationMode = Config.LightEstimationMode.DISABLED
                     session.configure(config)
                     arSceneView?.setupSession(session)
                 }
@@ -260,6 +261,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             val config = Config(session)
             config.focusMode = Config.FocusMode.AUTO
             config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+            config.lightEstimationMode = Config.LightEstimationMode.DISABLED
             bytes?.let {
                 if (useSingleImage) {
                     if (!addImageToAugmentedImageDatabase(config, bytes)) {
@@ -285,6 +287,7 @@ class ArCoreAugmentedImagesView(activity: Activity, context: Context, messenger:
             val config = Config(session)
             config.focusMode = Config.FocusMode.AUTO
             config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+            config.lightEstimationMode = Config.LightEstimationMode.DISABLED
             bytesMap?.let {
                 if (!addMultipleImagesToAugmentedImageDatabase(config, bytesMap)) {
                     throw Exception("Could not setup augmented mediaInfo database")

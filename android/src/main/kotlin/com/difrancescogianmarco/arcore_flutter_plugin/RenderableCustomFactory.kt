@@ -45,21 +45,27 @@ class RenderableCustomFactory {
 
         private fun makeTextureAndMaterial(context: Context, flutterArCoreNode: FlutterArCoreNode, handler: MaterialHandler) {
              if (flutterArCoreNode.objectUrl != null) {
+                Log.i(TAG, "KOKO WTF 1");
                 if (flutterArCoreNode.mediaInfo == null) {
                     // 3D model
+                    Log.i(TAG, "KOKO WTF 3D model");
                     handler(null, null, null)
                 } else if (flutterArCoreNode.mediaInfo.isVideo) {
                     // Video
+                    Log.i(TAG, "KOKO WTF Video");
                     makeVideoMaterial(context, flutterArCoreNode, handler)
                 } else if (flutterArCoreNode.mediaInfo.isGif) {
                     // GIF
+                    Log.i(TAG, "KOKO WTF GIF");
                     handler(null, null, null)
                 } else {
                     // Static image
+                    Log.i(TAG, "KOKO WTF Static image");
                     makeImageMaterial(context, flutterArCoreNode, handler)
                 }
             } else if (flutterArCoreNode.shape?.materials != null && flutterArCoreNode.shape?.materials?.size!! > 0 ) {
                 // Shapes
+                Log.i(TAG, "KOKO WTF 2");
                 makeShapeMaterial(context, flutterArCoreNode, handler)
             } else {
                 handler(null, null, null)
@@ -114,7 +120,7 @@ class RenderableCustomFactory {
                     // Defaults to UNLIT because it's the only emissive one
                     .shading(MaterialBuilder.Shading.UNLIT)
                     .doubleSided(flutterArCoreNode.shape == null)
-                    .samplerParameter(MaterialBuilder.SamplerType.SAMPLER_EXTERNAL, MaterialBuilder.SamplerFormat.FLOAT, MaterialBuilder.SamplerPrecision.DEFAULT, "videoTexture")
+                    // .samplerParameter(MaterialBuilder.SamplerType.SAMPLER_EXTERNAL, MaterialBuilder.SamplerFormat.FLOAT, MaterialBuilder.SamplerPrecision.DEFAULT, "videoTexture")
                     .optimization(MaterialBuilder.Optimization.NONE)
 
             var materialPackage: MaterialPackage
@@ -201,7 +207,7 @@ class RenderableCustomFactory {
             if (bmp.config != Bitmap.Config.ARGB_8888) {
                 bmp = bmp.copy(Bitmap.Config.ARGB_8888,true)
             }
-
+            Log.i(TAG, "KOKO WTF makeImageMaterial");
             Texture.builder()
                     .setSampler(Texture.Sampler.builder()
                             .setMinFilter(Texture.Sampler.MinFilter.LINEAR_MIPMAP_LINEAR)
@@ -215,6 +221,7 @@ class RenderableCustomFactory {
                     .thenAccept { texture ->
                         MaterialCustomFactory.makeWithTexture(context, texture, false, flutterArCoreNode.shape!!.materials[0])
                                 ?.thenAccept { material: Material ->
+                                    Log.i(TAG, "KOKO WTF emmmm......");
                                     handler(texture, material, null)
                                 }?.exceptionally { throwable ->
                                     Log.i(TAG, "material error ${throwable}")
@@ -232,20 +239,25 @@ class RenderableCustomFactory {
         private fun makeModel(context: Context, flutterArCoreNode: FlutterArCoreNode, texture: Texture?, material: Material?, handler: ModelHandler) {
             if (flutterArCoreNode.shape != null) {
                 // Shapes
+                Log.i(TAG, "KOKO make model Shapes");
                 makeShapeModel(context, flutterArCoreNode, material!!, handler)
             } else if (flutterArCoreNode.objectUrl != null) {
                 if (flutterArCoreNode.mediaInfo == null) {
                     // 3D model
+                    Log.i(TAG, "KOKO make model 3D model");
                     make3dModel(context, flutterArCoreNode, handler)
                 }
                 else if (flutterArCoreNode.mediaInfo.isVideo) {
                     // Video
+                    Log.i(TAG, "KOKO make model Video");
                     makeVideoModel(context, flutterArCoreNode, handler)
                 } else if (flutterArCoreNode.mediaInfo.isGif) {
                     // GIF
+                    Log.i(TAG, "KOKO make model GIF");
                     makeGifModel(context, flutterArCoreNode, handler)
                 } else {
                     // Static image
+                    Log.i(TAG, "KOKO make model Static image");
                     makeImageModel(context, flutterArCoreNode, handler)
                 }
             }
@@ -268,6 +280,7 @@ class RenderableCustomFactory {
 
         private fun makeShapeModel(context: Context, flutterArCoreNode: FlutterArCoreNode, material: Material, handler: ModelHandler) {
             val renderable = flutterArCoreNode.shape?.buildShape(material)
+            Log.i(TAG, "KOKO shape built");
             handler(renderable, null)
         }
 
@@ -284,7 +297,10 @@ class RenderableCustomFactory {
             val bmp = BitmapFactory.decodeStream(stream)
             image.setImageBitmap(bmp)
 
-            ViewRenderable.builder().setView(context, image)
+            Log.i(TAG, "KOKO WTF are we there yet?");
+
+            ViewRenderable.builder()
+                    .setView(context, image)
                     .build()
                     .thenAccept(Consumer { renderable: ViewRenderable -> handler(renderable, null) })
                     .exceptionally { throwable ->

@@ -337,14 +337,16 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         if (arSceneView == null) {
             return
         }
-
+        Log.i(TAG, "KOKO 0")
         RenderableCustomFactory.makeRenderable(activity.applicationContext, flutterArCoreNode) { renderable, texture, material, t ->
             if (t != null) {
                 result.error("Make Renderable Error", t.localizedMessage, null)
                 return@makeRenderable
             }
             val myAnchor = arSceneView?.session?.createAnchor(Pose(flutterArCoreNode.getPosition(), flutterArCoreNode.getRotation()))
+            Log.i(TAG, "KOKO ${myAnchor}")
             if (myAnchor != null) {
+                Log.i(TAG, "KOKO 1")
                 val anchorNode = flutterArCoreNode.buildNode() //AnchorNode(myAnchor)
                 anchorNode.name = flutterArCoreNode.name
                 anchorNode.renderable = renderable
@@ -353,11 +355,12 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                     anchorNode.renderableInstance!!.material.setInt("baseColorIndex", 0)
                     anchorNode.renderableInstance!!.material.setTexture("baseColorMap", texture)
                 }
-
+                Log.i(TAG, "KOKO 2")
                 if (material != null) {
+                    Log.i(TAG, "KOKO 2.1")
                     anchorNode.renderableInstance!!.setMaterial(material)
                 }
-
+                Log.i(TAG, "KOKO 3")
                 if (flutterArCoreNode.mediaInfo?.isVideo == true) {
                     if (flutterArCoreNode.shape == null) {
                         anchorNode.localScale = Vector3(200 / 1920f, 200 / 1080f, 1f)
@@ -387,18 +390,19 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                         mediaPlayers.add(mediaPlayer)
                     }
                 }
-
+                Log.i(TAG, "KOKO 4")
                 if (flutterArCoreNode.scale != null) {
                     anchorNode.localScale = Vector3(
                             anchorNode.localScale.x * flutterArCoreNode.scale.x,
                             anchorNode.localScale.y * flutterArCoreNode.scale.y ,
                             anchorNode.localScale.z * flutterArCoreNode.scale.z)
                 }
-
+                Log.i(TAG, "KOKO 5")
                 if (flutterArCoreNode.mediaInfo == null || flutterArCoreNode.mediaInfo.isGif) {
                     anchorNode.renderableInstance!!.animate(true).start()
                 }
 
+                Log.i(TAG, "KOKO inserted")
                 Log.i(TAG, "addNodeWithAnchor inserted ${anchorNode.name}")
                 attachNodeToParent(anchorNode, flutterArCoreNode.parentNodeName)
 
@@ -596,6 +600,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
                     }
                     config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
                     config.focusMode = Config.FocusMode.AUTO;
+                    config.lightEstimationMode = Config.LightEstimationMode.DISABLED
                     session.configure(config)
                     arSceneView?.setupSession(session)
                 }
