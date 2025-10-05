@@ -34,4 +34,8 @@ public class Sceneform {
         }
         return true;
     }
+
+    public static String versionName() {
+        return BuildConfig.VERSION_NAME;
+    }
 }

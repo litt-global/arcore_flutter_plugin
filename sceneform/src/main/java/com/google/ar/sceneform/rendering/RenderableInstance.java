@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.IntRange;
 import androidx.annotation.Nullable;
 import androidx.annotation.Size;
 
@@ -85,8 +86,12 @@ public class RenderableInstance implements AnimatableModel {
     @Nullable
     private SkinningModifier skinningModifier;
 
-    private ArrayList<Material> materialBindings = new ArrayList<>();
-    private ArrayList<String> materialNames = new ArrayList<>();
+    private int renderPriority = Renderable.RENDER_PRIORITY_DEFAULT;
+    private boolean isShadowCaster = true;
+    private boolean isShadowReceiver = true;
+
+    private ArrayList<Material> materialBindings;
+    private ArrayList<String> materialNames;
 
     @Nullable
     private Matrix cachedRelativeTransform;
@@ -99,8 +104,8 @@ public class RenderableInstance implements AnimatableModel {
         Preconditions.checkNotNull(renderable, "Parameter \"renderable\" was null.");
         this.transformProvider = transformProvider;
         this.renderable = renderable;
-        this.materialBindings = renderable.getMaterialBindings();
-        this.materialNames = renderable.getMaterialNames();
+        this.materialBindings = new ArrayList<>(renderable.getMaterialBindings());
+        this.materialNames = new ArrayList<>(renderable.getMaterialNames());
         entity = createFilamentEntity(EngineInstance.getEngine());
 
         // SFB's can be imported with re-centering or scaling; rather than perform those operations to
@@ -129,15 +134,17 @@ public class RenderableInstance implements AnimatableModel {
 
             Engine engine = EngineInstance.getEngine().getFilamentEngine();
 
-            AssetLoader loader =
-                    new AssetLoader(
-                            engine,
-                            RenderableInternalFilamentAssetData.getMaterialProvider(),
-                            EntityManager.get());
+            // 2. Pass the MaterialProvider to the AssetLoader constructor
+            AssetLoader loader = new AssetLoader(
+                    engine,
+                    RenderableInternalFilamentAssetData.getUberShaderLoader(), // Use the MaterialProvider instance
+                    EntityManager.get());
 
-            FilamentAsset createdAsset = renderableData.isGltfBinary ? loader.createAssetFromBinary(renderableData.gltfByteBuffer)
-                    : loader.createAssetFromJson(renderableData.gltfByteBuffer);
-            renderableData.resourceLoader.asyncBeginLoad(createdAsset);
+            FilamentAsset createdAsset = null;
+
+            if (renderableData.gltfByteBuffer != null) { // Check for null before using
+                createdAsset = loader.createAsset(renderableData.gltfByteBuffer);
+            }
 
             if (createdAsset == null) {
                 throw new IllegalStateException("Failed to load gltf");
@@ -168,7 +175,12 @@ public class RenderableInstance implements AnimatableModel {
                     Log.e(TAG, "Failed to download data uri " + dataUri, e);
                 }
             }
-            renderableData.resourceLoader.loadResources(createdAsset);
+
+            if (renderable.asyncLoadEnabled) {
+                renderableData.resourceLoader.asyncBeginLoad(createdAsset);
+            } else {
+                renderableData.resourceLoader.loadResources(createdAsset);
+            }
 
             RenderableManager renderableManager = EngineInstance.getEngine().getRenderableManager();
 
@@ -198,7 +210,10 @@ public class RenderableInstance implements AnimatableModel {
 
             filamentAsset = createdAsset;
 
-            filamentAnimator = createdAsset != null ? createdAsset.getAnimator() : null;
+            setRenderPriority(renderable.getRenderPriority());
+            setShadowCaster(renderable.isShadowCaster());
+            setShadowReceiver(renderable.isShadowReceiver());
+            filamentAnimator = createdAsset != null ? createdAsset.getInstance().getAnimator() : null;
             animations = new ArrayList<>();
             for (int i = 0; i < filamentAnimator.getAnimationCount(); i++) {
                 animations.add(new ModelAnimation(this, filamentAnimator.getAnimationName(i), i,
@@ -256,6 +271,119 @@ public class RenderableInstance implements AnimatableModel {
         transformManager.setTransform(instance, transform);
     }
 
+    /**
+     * Get the render priority that controls the order of rendering. The priority is between a range
+     * of 0 (rendered first) and 7 (rendered last). The default value is 4.
+     */
+    public int getRenderPriority() {
+        return renderPriority;
+    }
+
+    /**
+     * Set the render priority to control the order of rendering. The priority is between a range of 0
+     * (rendered first) and 7 (rendered last). The default value is 4.
+     */
+    public void setRenderPriority(@IntRange(from = Renderable.RENDER_PRIORITY_FIRST, to = Renderable.RENDER_PRIORITY_LAST) int renderPriority) {
+        int[] entities = getFilamentAsset().getEntities();
+        this.renderPriority = Math.min(Renderable.RENDER_PRIORITY_LAST, Math.max(Renderable.RENDER_PRIORITY_FIRST, renderPriority));
+        RenderableManager renderableManager = EngineInstance.getEngine().getRenderableManager();
+        for (int i = 0; i < entities.length; i++) {
+            @EntityInstance int renderableInstance = renderableManager.getInstance(entities[i]);
+            if (renderableInstance != 0) {
+                renderableManager.setPriority(renderableInstance, this.renderPriority);
+            }
+        }
+    }
+
+    /**
+     * ### Changes whether or not frustum culling is on
+     * <p>
+     * The view frustum is the region of space in the modeled world that may appear on the screen.
+     * Viewing-frustum culling is the process of removing objects that lie completely outside the
+     * viewing frustum from the rendering process.
+     * In other words, `true` = your model won't be visible/rendered when not any part of its
+     * bounding box is visible/inside the camera view.
+     * <p>
+     * Rendering these object would be a waste of time since they are not directly visible.
+     * To make culling fast, it is usually done using bounding box surrounding the objects rather
+     * than the objects themselves.
+     * Instead of sending all information to your GPU, you will sort visible and invisible elements
+     * and render only visible elements.
+     * Thanks to this technique, you will earn GPU compute time.
+     * <p>
+     * Do not confuse frustum culling with backface culling. The latter is controlled via the
+     * material
+     * <p>
+     * true by default
+     */
+    public void setCulling(boolean isCulling) {
+        RenderableManager renderableManager = EngineInstance.getEngine().getRenderableManager();
+        @EntityInstance int renderableInstance = renderableManager.getInstance(getEntity());
+        if (renderableInstance != 0 && renderableManager.hasComponent(renderableInstance)) {
+            renderableManager.setCulling(renderableInstance, isShadowCaster);
+        }
+        int[] entities = getFilamentAsset().getEntities();
+        for (int i = 0; i < entities.length; i++) {
+            renderableInstance = renderableManager.getInstance(entities[i]);
+            if (renderableInstance != 0) {
+                renderableManager.setCulling(renderableInstance, isCulling);
+            }
+        }
+    }
+
+    /**
+     * Returns true if configured to cast shadows on other renderables.
+     */
+    public boolean isShadowCaster() {
+        return isShadowCaster;
+    }
+
+    /**
+     * Sets whether the renderable casts shadow on other renderables in the scene.
+     */
+    public void setShadowCaster(boolean isShadowCaster) {
+        this.isShadowCaster = isShadowCaster;
+        RenderableManager renderableManager = EngineInstance.getEngine().getRenderableManager();
+        @EntityInstance int renderableInstance = renderableManager.getInstance(getEntity());
+        if (renderableInstance != 0) {
+            renderableManager.setCastShadows(renderableInstance, isShadowCaster);
+        }
+        //TODO : Verify if we don't need to apply the parameter to child entities
+//        int[] entities = getFilamentAsset().getEntities();
+//        for (int i = 0; i < entities.length; i++) {
+//            @EntityInstance int renderableInstance = renderableManager.getInstance(entities[i]);
+//            if (renderableInstance != 0) {
+//                renderableManager.setCastShadows(renderableInstance, isShadowCaster);
+//            }
+//        }
+    }
+
+    /**
+     * Returns true if configured to receive shadows cast by other renderables.
+     */
+    public boolean isShadowReceiver() {
+        return isShadowReceiver;
+    }
+
+    /**
+     * Sets whether the renderable receives shadows cast by other renderables in the scene.
+     */
+    public void setShadowReceiver(boolean isShadowReceiver) {
+        this.isShadowReceiver = isShadowReceiver;
+        RenderableManager renderableManager = EngineInstance.getEngine().getRenderableManager();
+        @EntityInstance int renderableInstance = renderableManager.getInstance(getEntity());
+        if (renderableInstance != 0) {
+            renderableManager.setReceiveShadows(renderableInstance, isShadowReceiver);
+        }
+        //TODO : Verify if we don't need to apply the parameter to child entities
+//        for (int i = 0; i < entities.length; i++) {
+//            @EntityInstance int renderableInstance = renderableManager.getInstance(entities[i]);
+//            if (renderableInstance != 0) {
+//                renderableManager.setReceiveShadows(renderableInstance, isShadowReceiver);
+//            }
+//        }
+    }
+
     ArrayList<Material> getMaterialBindings() {
         return materialBindings;
     }
@@ -292,8 +420,8 @@ public class RenderableInstance implements AnimatableModel {
      * Returns the material bound to the specified name.
      */
     public Material getMaterial(String name) {
-        for(int i=0;i<materialBindings.size();i++) {
-            if(TextUtils.equals(materialNames.get(i), name)) {
+        for (int i = 0; i < materialBindings.size(); i++) {
+            if (TextUtils.equals(materialNames.get(i), name)) {
                 return materialBindings.get(i);
             }
         }
@@ -316,6 +444,7 @@ public class RenderableInstance implements AnimatableModel {
             renderable.getId().update();
         }
     }
+
 
     /**
      * Returns the name associated with the specified index.
@@ -418,27 +547,32 @@ public class RenderableInstance implements AnimatableModel {
         attachFilamentAssetToRenderer();
     }
 
-    void detachFilamentAssetFromRenderer() {
-        FilamentAsset currentFilamentAsset = filamentAsset;
-        if (currentFilamentAsset != null) {
-            int[] entities = currentFilamentAsset.getEntities();
-            for (int entity : entities) {
-                Preconditions.checkNotNull(attachedRenderer).getFilamentScene().removeEntity(entity);
+    public void detachFromRenderer() {
+        if (attachedRenderer != null) {
+            FilamentAsset currentFilamentAsset = filamentAsset;
+            if (currentFilamentAsset != null) {
+                int[] entities = currentFilamentAsset.getEntities();
+                for (int entity : entities) {
+                    attachedRenderer.getFilamentScene().removeEntity(entity);
+                }
+                int root = currentFilamentAsset.getRoot();
+                attachedRenderer.getFilamentScene().removeEntity(root);
             }
-            int root = currentFilamentAsset.getRoot();
-            Preconditions.checkNotNull(attachedRenderer).getFilamentScene().removeEntity(root);
+            attachedRenderer.removeInstance(this);
+            renderable.detatchFromRenderer();
         }
     }
 
     /**
-     * @hide
+     * Detach and destroy the instance
      */
-    public void detachFromRenderer() {
-        Renderer rendererToDetach = attachedRenderer;
-        if (rendererToDetach != null) {
-            detachFilamentAssetFromRenderer();
-            rendererToDetach.removeInstance(this);
-            renderable.detatchFromRenderer();
+    public void destroy() {
+        detachFromRenderer();
+
+        if (renderable.getRenderableData() instanceof RenderableInternalFilamentAssetData) {
+            RenderableInternalFilamentAssetData renderableData =
+                    (RenderableInternalFilamentAssetData) renderable.getRenderableData();
+            renderableData.resourceLoader.evictResourceData();
         }
     }
 
@@ -503,6 +637,7 @@ public class RenderableInstance implements AnimatableModel {
                 if (getFilamentAnimator() != null) {
                     getFilamentAnimator().applyAnimation(i, animation.getTimePosition());
                 }
+                animation.setDirty(false);
                 hasUpdate = true;
             }
         }

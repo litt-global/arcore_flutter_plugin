@@ -2,7 +2,6 @@ package com.google.ar.sceneform.rendering;
 
 import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
@@ -36,6 +35,8 @@ public abstract class Renderable {
     // Data that can be shared between Renderables with makeCopy()
     private final IRenderableInternalData renderableData;
 
+    protected boolean asyncLoadEnabled;
+
     // Data that is unique per-Renderable.
     private final ArrayList<Material> materialBindings = new ArrayList<>();
     private final ArrayList<String> materialNames = new ArrayList<>();
@@ -62,21 +63,18 @@ public abstract class Renderable {
      */
     @SuppressWarnings("initialization") // Suppress @UnderInitialization warning.
     protected Renderable(Renderable.Builder<? extends Renderable, ? extends Builder<?, ?>> builder) {
-        Log.i("Renderable", "KOKO Create Renderable");
         Preconditions.checkNotNull(builder, "Parameter \"builder\" was null.");
         if (builder.isFilamentAsset) {
-            Log.i("Renderable", "KOKO Create RenderableInternalFilamentAssetData");
             renderableData = new RenderableInternalFilamentAssetData();
         } else if (builder.isGltf) {
-            Log.i("Renderable", "KOKO Create createRenderableInternalGltfData");
             renderableData = createRenderableInternalGltfData();
         } else {
-            Log.i("Renderable", "KOKO Create RenderableInternalData");
             renderableData = new RenderableInternalData();
         }
         if (builder.definition != null) {
             updateFromDefinition(builder.definition);
         }
+        asyncLoadEnabled = builder.asyncLoadEnabled;
         animationFrameRate = builder.animationFrameRate;
     }
 
@@ -106,6 +104,7 @@ public abstract class Renderable {
             collisionShape = other.collisionShape.makeCopy();
         }
 
+        asyncLoadEnabled = other.asyncLoadEnabled;
         animationFrameRate = other.animationFrameRate;
 
         changeId.update();
@@ -337,7 +336,7 @@ public abstract class Renderable {
      * careful when modifying the data before or between build calls.
      */
     @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"}) // CompletableFuture
-    abstract static class Builder<T extends Renderable, B extends Builder<T, B>> {
+    public abstract static class Builder<T extends Renderable, B extends Builder<T, B>> {
         /**
          * @hide
          */
@@ -357,6 +356,7 @@ public abstract class Renderable {
         private RenderableDefinition definition = null;
         private boolean isGltf = false;
         private boolean isFilamentAsset = false;
+        private boolean asyncLoadEnabled = false;
         @Nullable
         private LoadGltfListener loadGltfListener;
         @Nullable
@@ -415,6 +415,15 @@ public abstract class Renderable {
 
         public B setIsFilamentGltf(boolean isFilamentGltf) {
             this.isFilamentAsset = isFilamentGltf;
+            return getSelf();
+        }
+
+        /**
+         * Enable textures async loading after first rendering.
+         * Default is false.
+         */
+        public B setAsyncLoadEnabled(boolean asyncLoadEnabled) {
+            this.asyncLoadEnabled = asyncLoadEnabled;
             return getSelf();
         }
 

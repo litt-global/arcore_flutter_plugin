@@ -67,6 +67,10 @@ public class ViewRenderable extends Renderable {
   // on the size of the view.
   private final Matrix viewScaleMatrix = new Matrix();
 
+  // Cached vectors to avoid allocations in getFinalModelMatrix.
+  private final Vector3 scaleMatrixScale = new Vector3();
+  private final Vector3 scaleMatrixTranslation = new Vector3();
+
   private ViewSizer viewSizer;
   private VerticalAlignment verticalAlignment = VerticalAlignment.BOTTOM;
   private HorizontalAlignment horizontalAlignment = HorizontalAlignment.CENTER;
@@ -207,15 +211,16 @@ public class ViewRenderable extends Renderable {
     // basis as well.
 
     Vector3 size = viewSizer.getSize(view);
-    viewScaleMatrix.makeScale(new Vector3(size.x, size.y, 1.0f));
+    scaleMatrixScale.set(size.x, size.y, 1.0f);
+    viewScaleMatrix.makeScale(scaleMatrixScale);
 
     // Set the translation of the matrix based on the alignment pre-scaled by the size.
     // This is much more efficient than allocating an additional matrix and doing a matrix multiply.
-    viewScaleMatrix.setTranslation(
-        new Vector3(
+    scaleMatrixTranslation.set(
             getOffsetRatioForAlignment(horizontalAlignment) * size.x,
             getOffsetRatioForAlignment(verticalAlignment) * size.y,
-            0.0f));
+            0.0f);
+    viewScaleMatrix.setTranslation(scaleMatrixTranslation);
 
     Matrix.multiply(originalMatrix, viewScaleMatrix, viewScaleMatrix);
 
@@ -232,6 +237,8 @@ public class ViewRenderable extends Renderable {
 
     ViewRenderableInternalData data = Preconditions.checkNotNull(viewRenderableData);
     RenderViewToExternalTexture renderViewToExternalTexture = data.getRenderView();
+
+    getMaterial().setBoolean("viewTextureReady", renderViewToExternalTexture.isViewTextureReady());
 
     if (!renderViewToExternalTexture.isAttachedToWindow()
         || !renderViewToExternalTexture.isLaidOut()) {
@@ -440,7 +447,7 @@ public class ViewRenderable extends Renderable {
         CompletableFuture<Void> setSourceFuture = Material.builder()
                 .setSource(
                         context,
-                        RenderingResources.GetSceneformResource(
+                        RenderingResources.GetSceneformSourceResourceUri(
                                 context, RenderingResources.Resource.VIEW_RENDERABLE_MATERIAL))
                 .build()
                 .thenAccept(

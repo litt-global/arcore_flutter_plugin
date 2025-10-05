@@ -6,12 +6,10 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.android.filament.EntityInstance;
 import com.google.android.filament.IndexBuffer;
-import com.google.android.filament.RenderableManager;
 import com.google.android.filament.VertexBuffer;
-import com.google.android.filament.gltfio.MaterialProvider;
 import com.google.android.filament.gltfio.ResourceLoader;
+import com.google.android.filament.gltfio.UbershaderProvider;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.RenderableInternalData.MeshData;
 
@@ -31,13 +29,13 @@ public class RenderableInternalFilamentAssetData implements IRenderableInternalD
   boolean isGltfBinary;
   ResourceLoader resourceLoader;
   @Nullable Function<String, Uri> urlResolver;
-  static MaterialProvider materialProvider;
+  static UbershaderProvider ubershaderProvider;
 
-  static MaterialProvider getMaterialProvider() {
-    if (materialProvider == null) {
-      materialProvider = new MaterialProvider(EngineInstance.getEngine().getFilamentEngine());
+  static UbershaderProvider getUberShaderLoader() {
+    if(ubershaderProvider == null) {
+      ubershaderProvider = new UbershaderProvider(EngineInstance.getEngine().getFilamentEngine());
     }
-    return materialProvider;
+    return ubershaderProvider;
   }
 
   @Override
@@ -218,23 +216,6 @@ public class RenderableInternalFilamentAssetData implements IRenderableInternalD
 
   @Override
   public void buildInstanceData(RenderableInstance instance, int renderedEntity) {
-    Renderable renderable = instance.getRenderable();
-    RenderableManager renderableManager = EngineInstance.getEngine().getRenderableManager();
-    for (int entity : instance.getFilamentAsset().getEntities()) {
-      @EntityInstance int renderableInstance = renderableManager.getInstance(entity);
-      if (renderableInstance == 0) {
-        continue;
-      }
-      renderableManager.setPriority(renderableInstance, renderable.getRenderPriority());
-      renderableManager.setCastShadows(renderableInstance, renderable.isShadowCaster());
-      renderableManager.setReceiveShadows(renderableInstance, renderable.isShadowReceiver());
-      ArrayList<Material> materialBindings = instance.getMaterialBindings();
-      for(int i=0;i<materialBindings.size();i++) {
-        Material material = materialBindings.get(i);
-        renderableManager.setMaterialInstanceAt(renderableInstance, i,
-                material.getFilamentMaterialInstance());
-      }
-    }
   }
 
   @Override

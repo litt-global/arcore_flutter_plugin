@@ -58,9 +58,8 @@ class MaterialCustomFactory {
         }
 
         fun makeOpaqueWithTexture(context: Context, texture: Texture, flutterArCoreMaterial: FlutterArCoreMaterial): CompletableFuture<Material> {
-            Log.i(TAG, "KOKO WTF makeOpaqueWithTexture");
             val materialFuture = Material.builder().setSource(context, R.raw.sceneform_opaque_textured_material).build()
-            Log.i(TAG, "KOKO WTF makeOpaqueWithTexture built");
+            
             return materialFuture.thenApply { material: Material ->
                 material.setTexture(MATERIAL_TEXTURE, texture)
                 applyCustomPbrParams2(material, flutterArCoreMaterial)
