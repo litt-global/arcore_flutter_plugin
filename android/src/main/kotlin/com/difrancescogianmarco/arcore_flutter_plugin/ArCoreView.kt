@@ -132,6 +132,7 @@ class ArCoreView(val activity: Activity, context: Context, messenger: BinaryMess
         // Lastly request CAMERA permission which is required by ARCore.
         ArCoreUtils.requestCameraPermission(activity, RC_PERMISSIONS)
         setupLifeCycle(context)
+        onResume()
     }
 
     fun loadMesh(textureBytes: ByteArray?) {
